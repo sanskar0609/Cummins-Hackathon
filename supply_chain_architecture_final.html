@@ -1,0 +1,2286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Supply Chain Intelligence OS — Architecture</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
+
+:root {
+  --bg:        #06080d;
+  --bg2:       #0b0f17;
+  --bg3:       #101520;
+  --bg4:       #141922;
+  --border:    rgba(255,255,255,0.06);
+  --border2:   rgba(255,255,255,0.11);
+  --text:      #c9d3e0;
+  --muted:     #4a5568;
+  --dim:       #718096;
+
+  /* transport modes */
+  --sea:    #22d3ee;
+  --air:    #a78bfa;
+  --road:   #fbbf24;
+  --geo:    #f87171;
+  --pipe:   #34d399;
+
+  /* speed paths */
+  --fast:   #fb923c;
+  --slow:   #818cf8;
+
+  /* scope */
+  --company: #4ade80;
+  --global:  #e879f9;
+
+  /* HERO differentiators */
+  --agent:   #ff6b35;
+  --whatif:  #ff6b35;
+  --tier:    #00d4ff;
+  --demand:  #ffd60a;
+
+  /* NEW AGENT FEATURES */
+  --copilot:  #c084fc;
+  --agentic:  #4ade80;
+  --health:   #fb7185;
+
+  --mono: 'Space Mono', monospace;
+  --display: 'Syne', sans-serif;
+  --body: 'DM Sans', sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--body);
+  font-size: 13px;
+  line-height: 1.55;
+  min-height: 100vh;
+  overflow-x: hidden;
+  padding-bottom: 80px;
+}
+
+/* ─── NOISE TEXTURE ─── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ─── HERO HEADER ─── */
+.hero {
+  position: relative;
+  padding: 60px 40px 48px;
+  text-align: center;
+  overflow: hidden;
+  z-index: 1;
+}
+
+/* background glow orbs */
+.hero::before {
+  content: '';
+  position: absolute;
+  top: -60px; left: 50%;
+  transform: translateX(-50%);
+  width: 700px; height: 300px;
+  background: radial-gradient(ellipse at center, rgba(255,107,53,0.13) 0%, rgba(0,212,255,0.07) 45%, transparent 70%);
+  pointer-events: none;
+  filter: blur(30px);
+}
+
+.hero-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--agent);
+  border: 1px solid rgba(255,107,53,0.3);
+  background: rgba(255,107,53,0.07);
+  padding: 6px 16px;
+  border-radius: 100px;
+  margin-bottom: 24px;
+}
+
+.hero-tag-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--agent);
+  animation: blink 1.6s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%,100% { opacity: 1; } 50% { opacity: 0.2; }
+}
+
+.hero h1 {
+  font-family: var(--display);
+  font-size: clamp(32px, 5vw, 54px);
+  font-weight: 800;
+  letter-spacing: -1.5px;
+  line-height: 1.05;
+  color: #fff;
+  margin-bottom: 14px;
+}
+
+.hero h1 span.accent-orange { color: var(--agent); }
+.hero h1 span.accent-cyan   { color: var(--tier); }
+
+.hero-sub {
+  font-family: var(--body);
+  font-size: 15px;
+  color: var(--dim);
+  max-width: 580px;
+  margin: 0 auto 32px;
+  font-weight: 300;
+  line-height: 1.65;
+}
+
+/* ─── THREE HERO PILLS (unique features summary) ─── */
+.hero-pills {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.hero-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 700;
+  border: 1px solid;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-pill::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.06;
+}
+
+.pill-agent  { color: var(--agent);  border-color: rgba(255,107,53,0.4);  background: rgba(255,107,53,0.08); }
+.pill-tier   { color: var(--tier);   border-color: rgba(0,212,255,0.4);   background: rgba(0,212,255,0.08);  }
+.pill-demand { color: var(--demand); border-color: rgba(255,214,10,0.4);  background: rgba(255,214,10,0.08); }
+
+.hero-pill-icon { font-size: 15px; }
+
+/* ─── MAIN CANVAS ─── */
+.canvas {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  position: relative;
+  z-index: 1;
+}
+
+/* ─── FLOW ARROW ─── */
+.flow-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 0;
+  gap: 10px;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.flow-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border2), transparent);
+  max-width: 160px;
+}
+
+/* ─── BASE LAYER CARD ─── */
+.layer {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 22px 24px;
+  position: relative;
+  transition: border-color 0.2s;
+}
+.layer:hover { border-color: var(--border2); }
+
+/* ─── UNIQUE FEATURE LAYER ─── */
+.layer-unique {
+  border-radius: 14px;
+  position: relative;
+}
+
+.layer-unique-agent {
+  border: 1px solid rgba(255,107,53,0.35);
+  background: linear-gradient(135deg, rgba(255,107,53,0.05) 0%, var(--bg2) 60%);
+  box-shadow: 0 0 40px rgba(255,107,53,0.07) inset, 0 0 0 1px rgba(255,107,53,0.35);
+}
+
+.layer-unique-tier {
+  border: 1px solid rgba(0,212,255,0.3);
+  background: linear-gradient(135deg, rgba(0,212,255,0.05) 0%, var(--bg2) 60%);
+  box-shadow: 0 0 40px rgba(0,212,255,0.07) inset, 0 0 0 1px rgba(0,212,255,0.3);
+}
+
+.layer-unique-demand {
+  border: 1px solid rgba(255,214,10,0.3);
+  background: linear-gradient(135deg, rgba(255,214,10,0.05) 0%, var(--bg2) 60%);
+  box-shadow: 0 0 40px rgba(255,214,10,0.07) inset, 0 0 0 1px rgba(255,214,10,0.3);
+}
+
+/* UNIQUE badge ribbon */
+.unique-ribbon {
+  position: absolute;
+  top: -1px;
+  right: 22px;
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  padding: 4px 12px;
+  border-radius: 0 0 8px 8px;
+  font-weight: 700;
+  border: 1px solid;
+  border-top: none;
+}
+
+.ribbon-agent  { background: rgba(255,107,53,0.2);  color: var(--agent);  border-color: rgba(255,107,53,0.4); }
+.ribbon-tier   { background: rgba(0,212,255,0.15);  color: var(--tier);   border-color: rgba(0,212,255,0.35); }
+.ribbon-demand { background: rgba(255,214,10,0.15); color: var(--demand); border-color: rgba(255,214,10,0.35);}
+
+/* ─── LAYER TITLE ─── */
+.layer-title {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.layer-title-num {
+  color: var(--muted);
+}
+.layer-title-sep { color: var(--border2); }
+.layer-title-name { color: #fff; font-weight: 700; }
+
+.lbadge {
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-weight: 700;
+}
+.lbadge-agent  { background: rgba(255,107,53,0.18); color: var(--agent);  border: 1px solid rgba(255,107,53,0.35); }
+.lbadge-tier   { background: rgba(0,212,255,0.12);  color: var(--tier);   border: 1px solid rgba(0,212,255,0.3);  }
+.lbadge-demand { background: rgba(255,214,10,0.12); color: var(--demand); border: 1px solid rgba(255,214,10,0.3); }
+
+/* ─── GRIDS ─── */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; }
+.grid-5 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 1fr; gap: 8px; }
+
+/* ─── NODE ─── */
+.node {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 13px 15px;
+  transition: transform 0.15s, border-color 0.15s;
+}
+.node:hover { transform: translateY(-2px); border-color: var(--border2); }
+
+.node-cat {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 5px;
+}
+.node-title {
+  font-family: var(--display);
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 5px;
+  line-height: 1.3;
+}
+.node-desc {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.tag {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.07em;
+  padding: 2px 7px;
+  border-radius: 3px;
+  margin-top: 8px;
+  margin-right: 4px;
+}
+
+/* colour helpers */
+.c-sea    { color: var(--sea); }
+.c-air    { color: var(--air); }
+.c-road   { color: var(--road); }
+.c-geo    { color: var(--geo); }
+.c-pipe   { color: var(--pipe); }
+.c-fast   { color: var(--fast); }
+.c-slow   { color: var(--slow); }
+.c-co     { color: var(--company); }
+.c-gl     { color: var(--global); }
+.c-agent  { color: var(--agent); }
+.c-tier   { color: var(--tier); }
+.c-demand { color: var(--demand); }
+.c-dim    { color: var(--dim); }
+.c-white  { color: #fff; }
+
+.bg-node-sea    { background: rgba(34,211,238,0.07);   border-color: rgba(34,211,238,0.2); }
+.bg-node-air    { background: rgba(167,139,250,0.07);  border-color: rgba(167,139,250,0.2); }
+.bg-node-road   { background: rgba(251,191,36,0.07);   border-color: rgba(251,191,36,0.2); }
+.bg-node-geo    { background: rgba(248,113,113,0.07);  border-color: rgba(248,113,113,0.2); }
+.bg-node-pipe   { background: rgba(52,211,153,0.07);   border-color: rgba(52,211,153,0.2); }
+.bg-node-fast   { background: rgba(251,146,60,0.07);   border-color: rgba(251,146,60,0.2); }
+.bg-node-slow   { background: rgba(129,140,248,0.07);  border-color: rgba(129,140,248,0.2); }
+.bg-node-co     { background: rgba(74,222,128,0.07);   border-color: rgba(74,222,128,0.2); }
+.bg-node-gl     { background: rgba(232,121,249,0.07);  border-color: rgba(232,121,249,0.2); }
+.bg-node-agent  { background: rgba(255,107,53,0.08);   border-color: rgba(255,107,53,0.25); }
+.bg-node-tier   { background: rgba(0,212,255,0.07);    border-color: rgba(0,212,255,0.22); }
+.bg-node-demand { background: rgba(255,214,10,0.07);   border-color: rgba(255,214,10,0.22); }
+
+.tag-sea    { background: rgba(34,211,238,0.15);  color: var(--sea); }
+.tag-air    { background: rgba(167,139,250,0.15); color: var(--air); }
+.tag-road   { background: rgba(251,191,36,0.15);  color: var(--road); }
+.tag-geo    { background: rgba(248,113,113,0.15); color: var(--geo); }
+.tag-pipe   { background: rgba(52,211,153,0.15);  color: var(--pipe); }
+.tag-fast   { background: rgba(251,146,60,0.15);  color: var(--fast); }
+.tag-slow   { background: rgba(129,140,248,0.15); color: var(--slow); }
+.tag-co     { background: rgba(74,222,128,0.15);  color: var(--company); }
+.tag-gl     { background: rgba(232,121,249,0.15); color: var(--global); }
+.tag-agent  { background: rgba(255,107,53,0.18);  color: var(--agent); }
+.tag-tier   { background: rgba(0,212,255,0.15);   color: var(--tier); }
+.tag-demand { background: rgba(255,214,10,0.15);  color: var(--demand); }
+.tag-gray   { background: rgba(255,255,255,0.07); color: var(--dim); }
+
+/* ─── SPLIT COLUMN LAYOUT ─── */
+.split { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.split-col { display: flex; flex-direction: column; gap: 8px; }
+.split-header {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 7px 12px;
+  border-radius: 6px;
+  text-align: center;
+  font-weight: 700;
+}
+
+/* ─── SECTION DIVIDER ─── */
+.section-divider {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 20px 0 6px;
+}
+.section-divider-line {
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+.section-divider-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* ─── UNIQUE FEATURE: WHAT-IF SCENARIOS ─── */
+.scenario-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  margin: 14px 0;
+}
+.scenario-card {
+  background: rgba(255,107,53,0.05);
+  border: 1px solid rgba(255,107,53,0.18);
+  border-radius: 9px;
+  padding: 14px;
+}
+.scenario-label {
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--agent);
+  margin-bottom: 5px;
+}
+.scenario-title {
+  font-family: var(--display);
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 10px;
+  line-height: 1.3;
+}
+.scenario-params { display: flex; flex-direction: column; gap: 4px; margin-bottom: 9px; }
+.scenario-param {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 10px;
+  color: var(--muted);
+}
+.scenario-param-val {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--agent);
+}
+.scenario-output {
+  padding: 7px 10px;
+  background: rgba(255,107,53,0.1);
+  border-radius: 5px;
+  font-size: 9px;
+  color: var(--text);
+  font-family: var(--mono);
+  border: 1px solid rgba(255,107,53,0.2);
+  line-height: 1.45;
+}
+
+/* ─── UNIQUE: TIER MAP ─── */
+.tier-map {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: start;
+}
+.tier-diagram {
+  background: var(--bg3);
+  border: 1px solid rgba(0,212,255,0.18);
+  border-radius: 9px;
+  padding: 16px;
+}
+.tier-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.tier-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+  width: 36px;
+  flex-shrink: 0;
+  letter-spacing: 0.08em;
+}
+.tier-nodes { display: flex; gap: 6px; flex-wrap: wrap; }
+.tier-pill {
+  font-family: var(--mono);
+  font-size: 9px;
+  padding: 3px 9px;
+  border-radius: 100px;
+  border: 1px solid;
+  white-space: nowrap;
+}
+.tier-arrow { padding-left: 36px; color: var(--border2); font-size: 11px; margin-bottom: 4px; }
+.tier-warning {
+  margin-top: 10px;
+  padding: 8px 12px;
+  background: rgba(248,113,113,0.08);
+  border: 1px solid rgba(248,113,113,0.25);
+  border-radius: 6px;
+  font-size: 10px;
+  color: var(--geo);
+  font-family: var(--mono);
+}
+
+/* ─── UNIQUE: DEMAND SENSING ─── */
+.demand-fusion {
+  background: rgba(255,214,10,0.04);
+  border: 1px solid rgba(255,214,10,0.2);
+  border-radius: 9px;
+  padding: 16px 20px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 20px;
+  align-items: center;
+  margin-top: 12px;
+}
+.d-ratio {
+  text-align: center;
+}
+.d-ratio-num {
+  font-family: var(--display);
+  font-size: 42px;
+  font-weight: 800;
+  color: var(--demand);
+  line-height: 1;
+}
+.d-ratio-label {
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.d-bars { display: flex; flex-direction: column; gap: 6px; }
+.d-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 10px;
+  color: var(--dim);
+}
+.d-bar-name { width: 120px; flex-shrink: 0; }
+.d-bar-bg {
+  flex: 1;
+  height: 3px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.d-bar-fill { height: 100%; border-radius: 2px; }
+.d-bar-val {
+  font-family: var(--mono);
+  font-size: 9px;
+  width: 50px;
+  text-align: right;
+}
+.d-actions { display: flex; flex-direction: column; gap: 6px; }
+.d-action {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 10px;
+  padding: 8px 10px;
+  background: var(--bg);
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  line-height: 1.4;
+}
+.d-action-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--demand);
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+/* ─── ENSEMBLE BLOCK ─── */
+.ensemble {
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: 9px;
+  padding: 18px 22px;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 24px;
+  align-items: center;
+}
+.e-bars { display: flex; flex-direction: column; gap: 7px; }
+.e-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 10px;
+}
+.e-bar-name { width: 44px; color: var(--muted); }
+.e-bar-bg {
+  flex: 1;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.e-bar-fill { height: 100%; border-radius: 2px; }
+.e-bar-val { width: 36px; text-align: right; }
+.e-center { text-align: center; }
+.e-score-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.e-score-num {
+  font-family: var(--display);
+  font-size: 52px;
+  font-weight: 800;
+  color: var(--geo);
+  line-height: 1;
+  margin-bottom: 6px;
+}
+.e-score-status {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  padding: 4px 12px;
+  border-radius: 100px;
+  background: rgba(248,113,113,0.15);
+  color: var(--geo);
+  display: inline-block;
+}
+.e-actions { display: flex; flex-direction: column; gap: 6px; }
+.e-action {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 11px;
+  padding: 8px 10px;
+  background: var(--bg);
+  border-radius: 6px;
+  border: 1px solid var(--border);
+}
+.e-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+
+/* ─── OUTPUT CARDS ─── */
+.output-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.out-card {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 14px 16px;
+  transition: border-color 0.2s;
+}
+.out-card:hover { border-color: var(--border2); }
+.out-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 7px;
+}
+.out-card-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.out-card-title {
+  font-family: var(--display);
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+}
+.out-card-desc { font-size: 11px; color: var(--muted); line-height: 1.5; margin-bottom: 8px; }
+.out-card-tech { font-family: var(--mono); font-size: 9px; color: var(--muted); letter-spacing: 0.06em; }
+
+/* ─── TECH STACK PILLS ─── */
+.stack-wrap { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* ─── TRAINING SPLIT ─── */
+.train-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.train-col {
+  border-radius: 9px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.train-col-head {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 4px;
+}
+.pulse-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  animation: blink 1.8s ease-in-out infinite;
+}
+
+/* ─── UNIQUE INSIGHT BANNER ─── */
+.insight-banner {
+  padding: 11px 16px;
+  border-radius: 7px;
+  font-size: 11px;
+  color: var(--dim);
+  margin-bottom: 14px;
+  line-height: 1.5;
+}
+.insight-banner strong { font-weight: 600; }
+.ib-agent  { background: rgba(255,107,53,0.07); border: 1px solid rgba(255,107,53,0.2); }
+.ib-tier   { background: rgba(0,212,255,0.06);  border: 1px solid rgba(0,212,255,0.18); }
+.ib-demand { background: rgba(255,214,10,0.06); border: 1px solid rgba(255,214,10,0.18); }
+.ib-label {
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-weight: 700;
+  margin-bottom: 3px;
+}
+
+/* ─── NEW FEATURE COLOURS ─── */
+.c-copilot  { color: var(--copilot); }
+.c-agentic  { color: var(--agentic); }
+.c-health   { color: var(--health);  }
+
+.bg-node-copilot { background: rgba(192,132,252,0.07); border-color: rgba(192,132,252,0.22); }
+.bg-node-agentic { background: rgba(74,222,128,0.07);  border-color: rgba(74,222,128,0.22);  }
+.bg-node-health  { background: rgba(251,113,133,0.07); border-color: rgba(251,113,133,0.22); }
+
+.tag-copilot { background: rgba(192,132,252,0.15); color: var(--copilot); }
+.tag-agentic { background: rgba(74,222,128,0.15);  color: var(--agentic); }
+.tag-health  { background: rgba(251,113,133,0.15); color: var(--health);  }
+
+.layer-unique-copilot {
+  border: 1px solid rgba(192,132,252,0.35);
+  background: linear-gradient(135deg, rgba(192,132,252,0.05) 0%, var(--bg2) 60%);
+  box-shadow: 0 0 40px rgba(192,132,252,0.07) inset, 0 0 0 1px rgba(192,132,252,0.35);
+}
+.layer-unique-agentic {
+  border: 1px solid rgba(74,222,128,0.3);
+  background: linear-gradient(135deg, rgba(74,222,128,0.05) 0%, var(--bg2) 60%);
+  box-shadow: 0 0 40px rgba(74,222,128,0.07) inset, 0 0 0 1px rgba(74,222,128,0.3);
+}
+.layer-unique-health {
+  border: 1px solid rgba(251,113,133,0.32);
+  background: linear-gradient(135deg, rgba(251,113,133,0.05) 0%, var(--bg2) 60%);
+  box-shadow: 0 0 40px rgba(251,113,133,0.07) inset, 0 0 0 1px rgba(251,113,133,0.32);
+}
+.ribbon-copilot { background: rgba(192,132,252,0.2);  color: var(--copilot); border-color: rgba(192,132,252,0.4); }
+.ribbon-agentic { background: rgba(74,222,128,0.15);  color: var(--agentic); border-color: rgba(74,222,128,0.35); }
+.ribbon-health  { background: rgba(251,113,133,0.18); color: var(--health);  border-color: rgba(251,113,133,0.38); }
+
+.lbadge-copilot { background: rgba(192,132,252,0.18); color: var(--copilot); border: 1px solid rgba(192,132,252,0.35); }
+.lbadge-agentic { background: rgba(74,222,128,0.15);  color: var(--agentic); border: 1px solid rgba(74,222,128,0.3);  }
+.lbadge-health  { background: rgba(251,113,133,0.15); color: var(--health);  border: 1px solid rgba(251,113,133,0.3);  }
+
+.ib-copilot { background: rgba(192,132,252,0.06); border: 1px solid rgba(192,132,252,0.2); }
+.ib-agentic { background: rgba(74,222,128,0.06);  border: 1px solid rgba(74,222,128,0.18); }
+.ib-health  { background: rgba(251,113,133,0.06); border: 1px solid rgba(251,113,133,0.2);  }
+
+.diff-copilot  { border-color: rgba(192,132,252,0.35); background: rgba(192,132,252,0.06); }
+.diff-copilot::before  { background: var(--copilot); }
+.diff-agentic  { border-color: rgba(74,222,128,0.3);   background: rgba(74,222,128,0.05);  }
+.diff-agentic::before  { background: var(--agentic); }
+.diff-health   { border-color: rgba(251,113,133,0.32); background: rgba(251,113,133,0.05); }
+.diff-health::before   { background: var(--health); }
+
+.diff-vs-copilot  { background: rgba(192,132,252,0.12); color: var(--copilot); }
+.diff-vs-agentic  { background: rgba(74,222,128,0.1);   color: var(--agentic); }
+.diff-vs-health   { background: rgba(251,113,133,0.12); color: var(--health);  }
+
+/* Chat bubble styles for Co-Pilot demo */
+.chat-demo {
+  background: var(--bg3);
+  border: 1px solid rgba(192,132,252,0.2);
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.chat-header {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--copilot);
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.chat-header-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--copilot); animation: blink 1.6s ease-in-out infinite; }
+.bubble-user {
+  align-self: flex-end;
+  background: rgba(192,132,252,0.12);
+  border: 1px solid rgba(192,132,252,0.25);
+  border-radius: 12px 12px 3px 12px;
+  padding: 9px 14px;
+  font-size: 11px;
+  color: #fff;
+  max-width: 85%;
+  line-height: 1.45;
+}
+.bubble-agent {
+  align-self: flex-start;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border2);
+  border-radius: 3px 12px 12px 12px;
+  padding: 10px 14px;
+  font-size: 11px;
+  color: var(--text);
+  max-width: 92%;
+  line-height: 1.5;
+}
+.bubble-agent-label {
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--copilot);
+  margin-bottom: 5px;
+}
+.ranked-action {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 10px;
+  color: var(--dim);
+}
+.ranked-action:last-child { border-bottom: none; }
+.ranked-num {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--copilot);
+  width: 18px;
+  flex-shrink: 0;
+}
+
+/* Agentic loop flow */
+.agent-loop {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  margin: 14px 0;
+  position: relative;
+}
+.agent-loop::before {
+  content: '';
+  position: absolute;
+  top: 28px; left: 12%; right: 12%;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(74,222,128,0.3), rgba(74,222,128,0.7), rgba(74,222,128,0.3));
+  z-index: 0;
+}
+.loop-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 0 8px;
+  position: relative;
+  z-index: 1;
+}
+.loop-circle {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  border: 2px solid rgba(74,222,128,0.4);
+  background: rgba(74,222,128,0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  margin-bottom: 10px;
+  position: relative;
+}
+.loop-circle-num {
+  position: absolute;
+  top: -6px; right: -6px;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: var(--agentic);
+  color: var(--bg);
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.loop-title {
+  font-family: var(--display);
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 4px;
+}
+.loop-desc {
+  font-size: 10px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+.loop-arrow {
+  position: absolute;
+  top: 24px;
+  right: -8px;
+  font-size: 14px;
+  color: var(--agentic);
+  z-index: 2;
+}
+
+/* Slack message mock */
+.slack-mock {
+  background: #1a1d21;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  padding: 14px 16px;
+  font-size: 11px;
+  margin-top: 12px;
+}
+.slack-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+.slack-bot-icon {
+  width: 24px; height: 24px;
+  border-radius: 5px;
+  background: linear-gradient(135deg, var(--agentic), #22d3ee);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+}
+.slack-msg { color: var(--text); line-height: 1.55; margin-bottom: 10px; }
+.slack-buttons { display: flex; gap: 8px; }
+.slack-btn {
+  padding: 6px 14px;
+  border-radius: 5px;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  cursor: default;
+}
+.slack-btn-approve { background: rgba(74,222,128,0.15); color: var(--agentic); border: 1px solid rgba(74,222,128,0.35); }
+.slack-btn-modify  { background: rgba(255,214,10,0.1);  color: var(--demand);  border: 1px solid rgba(255,214,10,0.3);  }
+.slack-btn-reject  { background: rgba(248,113,113,0.1); color: var(--geo);     border: 1px solid rgba(248,113,113,0.3); }
+
+/* Health narrative */
+.health-narrative {
+  background: rgba(251,113,133,0.06);
+  border: 1px solid rgba(251,113,133,0.22);
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-top: 12px;
+}
+.health-narrative-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.health-narrative-title {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--health);
+}
+.health-score-badge {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 4px;
+  background: rgba(248,113,113,0.15);
+  color: var(--geo);
+  border: 1px solid rgba(248,113,113,0.3);
+}
+.health-narrative-text {
+  font-size: 11px;
+  color: var(--dim);
+  line-height: 1.65;
+  font-style: italic;
+}
+.health-signals {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+  margin-top: 10px;
+}
+.health-signal {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  font-size: 10px;
+  color: var(--muted);
+  padding: 6px 9px;
+  background: var(--bg);
+  border-radius: 5px;
+  border: 1px solid var(--border);
+}
+.health-signal-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--health); flex-shrink: 0; margin-top: 4px; }
+
+/* ─── MODE GRID ─── */
+.mode-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 7px;
+}
+.mode-card {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 10px;
+  text-align: center;
+  transition: transform 0.15s, border-color 0.15s;
+}
+.mode-card:hover { transform: translateY(-2px); border-color: var(--border2); }
+.mode-icon { font-size: 20px; display: block; margin-bottom: 7px; }
+.mode-name {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 3px;
+}
+.mode-algo { font-size: 10px; color: var(--muted); }
+.mode-features { font-size: 10px; color: var(--muted); margin-top: 6px; line-height: 1.4; }
+
+/* ─── LEGEND ─── */
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  justify-content: center;
+  padding: 14px 24px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  max-width: 1200px;
+  margin: 0 auto 20px;
+  position: relative;
+  z-index: 1;
+}
+.leg-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--dim);
+}
+.leg-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+
+/* ─── BOTTOM DIFFERENTIATOR ROW ─── */
+.diff-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  margin: 4px 0;
+}
+.diff-card {
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid;
+  position: relative;
+  overflow: hidden;
+}
+.diff-card::before {
+  content: '';
+  position: absolute;
+  top: -40px; right: -40px;
+  width: 120px; height: 120px;
+  border-radius: 50%;
+  filter: blur(40px);
+  opacity: 0.3;
+}
+.diff-agent  { border-color: rgba(255,107,53,0.35); background: rgba(255,107,53,0.06); }
+.diff-agent::before  { background: var(--agent); }
+.diff-tier   { border-color: rgba(0,212,255,0.3);   background: rgba(0,212,255,0.05);  }
+.diff-tier::before   { background: var(--tier); }
+.diff-demand { border-color: rgba(255,214,10,0.3);  background: rgba(255,214,10,0.05); }
+.diff-demand::before { background: var(--demand); }
+
+.diff-number {
+  font-family: var(--display);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+  opacity: 0.5;
+}
+.diff-title {
+  font-family: var(--display);
+  font-size: 16px;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.2;
+  margin-bottom: 8px;
+}
+.diff-desc {
+  font-size: 11px;
+  color: var(--dim);
+  line-height: 1.55;
+}
+.diff-vs {
+  margin-top: 10px;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  padding: 5px 10px;
+  border-radius: 4px;
+  display: inline-block;
+}
+.diff-vs-agent  { background: rgba(255,107,53,0.12); color: var(--agent); }
+.diff-vs-tier   { background: rgba(0,212,255,0.1);   color: var(--tier); }
+.diff-vs-demand { background: rgba(255,214,10,0.1);  color: var(--demand); }
+
+@media (max-width: 900px) {
+  .grid-4, .grid-5, .mode-grid { grid-template-columns: 1fr 1fr; }
+  .grid-3 { grid-template-columns: 1fr 1fr; }
+  .split, .train-grid, .ensemble { grid-template-columns: 1fr; }
+  .output-grid, .scenario-grid, .diff-row { grid-template-columns: 1fr 1fr; }
+  .tier-map, .demand-fusion { grid-template-columns: 1fr; }
+  .diff-row { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════
+     HERO
+═══════════════════════════════════════════ -->
+<div class="hero">
+  <div class="hero-tag">
+    <div class="hero-tag-dot"></div>
+    Hackathon Edition · Deep Architecture
+  </div>
+  <h1>
+    Supply Chain<br>
+    <span class="accent-orange">Intelligence OS</span>
+  </h1>
+  <div class="hero-sub">
+    Not a dashboard. An autonomous operating system that predicts, simulates, and acts — 
+    before your supply chain breaks.
+  </div>
+  <div class="hero-pills">
+    <div class="hero-pill pill-agent">
+      <span class="hero-pill-icon">⚡</span>
+      What-If Simulation Engine
+    </div>
+    <div class="hero-pill pill-tier">
+      <span class="hero-pill-icon">🔗</span>
+      T1 → T2 → T3 Dependency Mapping
+    </div>
+    <div class="hero-pill pill-demand">
+      <span class="hero-pill-icon">📡</span>
+      Live Demand Sensing
+    </div>
+    <div class="hero-pill" style="color:var(--copilot);border-color:rgba(192,132,252,0.4);background:rgba(192,132,252,0.08)">
+      <span class="hero-pill-icon">🤖</span>
+      AI Co-Pilot Chat Interface
+    </div>
+    <div class="hero-pill" style="color:var(--agentic);border-color:rgba(74,222,128,0.4);background:rgba(74,222,128,0.08)">
+      <span class="hero-pill-icon">🔄</span>
+      Autonomous Agentic Loop
+    </div>
+    <div class="hero-pill" style="color:var(--health);border-color:rgba(251,113,133,0.4);background:rgba(251,113,133,0.08)">
+      <span class="hero-pill-icon">🩺</span>
+      Supplier Health Narrative
+    </div>
+  </div>
+</div>
+
+<!-- LEGEND -->
+<div class="legend">
+  <div class="leg-item"><div class="leg-dot" style="background:var(--sea)"></div>Sea</div>
+  <div class="leg-item"><div class="leg-dot" style="background:var(--air)"></div>Air</div>
+  <div class="leg-item"><div class="leg-dot" style="background:var(--road)"></div>Road/Rail</div>
+  <div class="leg-item"><div class="leg-dot" style="background:var(--pipe)"></div>Pipeline</div>
+  <div class="leg-item"><div class="leg-dot" style="background:var(--geo)"></div>Geopolitical</div>
+  <div class="leg-item"><div class="leg-dot" style="background:var(--fast)"></div>Fast path · minutes</div>
+  <div class="leg-item"><div class="leg-dot" style="background:var(--slow)"></div>Slow path · nightly</div>
+  <div class="leg-item"><div class="leg-dot" style="background:var(--company)"></div>Company-specific</div>
+  <div class="leg-item"><div class="leg-dot" style="background:var(--global)"></div>Global</div>
+  <div class="leg-item"><div class="leg-dot" style="background:var(--agent)" style="box-shadow:0 0 6px var(--agent)"></div>★ What-If Engine</div>
+  <div class="leg-item"><div class="leg-dot" style="background:var(--tier)"></div>★ Multi-Tier Mapping</div>
+  <div class="leg-item"><div class="leg-dot" style="background:var(--demand)"></div>★ Demand Sensing</div>
+  <div class="leg-item"><div class="leg-dot" style="background:var(--copilot)"></div>★ AI Co-Pilot</div>
+  <div class="leg-item"><div class="leg-dot" style="background:var(--agentic)"></div>★ Agentic Loop</div>
+  <div class="leg-item"><div class="leg-dot" style="background:var(--health)"></div>★ Health Narrative</div>
+</div>
+
+<!-- ═══════════ SIX DIFFERENTIATOR CARDS ═══════════ -->
+<div class="canvas">
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:4px 0">
+  <div class="diff-card diff-agent">
+    <div class="diff-number c-agent">01 / UNIQUE</div>
+    <div class="diff-title c-agent">What-If<br>Simulation Engine</div>
+    <div class="diff-desc">The only tool that lets you sandbox any scenario — close a strait, fail a supplier, spike demand — and get ranked action ROI in under 8 seconds.</div>
+    <div class="diff-vs diff-vs-agent">vs Everstream / FourKites: they alert. We decide.</div>
+  </div>
+  <div class="diff-card diff-tier">
+    <div class="diff-number c-tier">02 / UNIQUE</div>
+    <div class="diff-title c-tier">T1 → T2 → T3<br>Dependency Graph</div>
+    <div class="diff-desc">Cascading risk propagation across all supplier tiers. A neon gas supplier in Mariupol failing auto-propagates to your chip fab's risk — before news breaks.</div>
+    <div class="diff-vs diff-vs-tier">vs Resilinc: they map. We propagate + alert automatically.</div>
+  </div>
+  <div class="diff-card diff-demand">
+    <div class="diff-number c-demand">03 / UNIQUE</div>
+    <div class="diff-title c-demand">Demand-Aware<br>Risk Scoring</div>
+    <div class="diff-desc">Every risk score multiplied by a live demand amplifier. A 0.6 risk route under 3× demand spike is more dangerous than a 0.9 risk route at normal volume.</div>
+    <div class="diff-vs diff-vs-demand">vs Every other tool: supply-side only. We fuse demand signals.</div>
+  </div>
+  <div class="diff-card diff-copilot">
+    <div class="diff-number c-copilot">04 / NEW AI</div>
+    <div class="diff-title c-copilot">Conversational<br>AI Co-Pilot</div>
+    <div class="diff-desc">Ask in plain English: "If Suez closes next week and Black Friday demand is 2×, what do I do?" — the agent runs the scenario and returns a ranked action plan + CFO email draft.</div>
+    <div class="diff-vs diff-vs-copilot">vs All competitors: they have dashboards. We have conversation.</div>
+  </div>
+  <div class="diff-card diff-agentic">
+    <div class="diff-number c-agentic">05 / NEW AI</div>
+    <div class="diff-title c-agentic">Autonomous<br>Agentic Loop</div>
+    <div class="diff-desc">Detects D/S &gt; 1.5×, drafts emergency PO, pings CFO on Slack for one-click approval, auto-executes via SAP BAPI. Not an alert system — an action system.</div>
+    <div class="diff-vs diff-vs-agentic">vs Every tool: they alert humans. We act, with human approval.</div>
+  </div>
+  <div class="diff-card diff-health">
+    <div class="diff-number c-health">06 / NEW AI</div>
+    <div class="diff-title c-health">Supplier Health<br>Narrative (LLM)</div>
+    <div class="diff-desc">Fuses LinkedIn layoffs, Glassdoor trend, CEO departure, AIS volume drops into a one-paragraph plain-English narrative: "Supplier A may fail in 90 days because..."</div>
+    <div class="diff-vs diff-vs-health">vs D&B scores: a number. We give you a story with reasoning.</div>
+  </div>
+</div>
+
+<div class="flow-arrow">
+  <div class="flow-line"></div>
+  <span>Data Flow Begins ↓</span>
+  <div class="flow-line"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     LAYER 0 — RAW DATA SOURCES
+═══════════════════════════════════════════ -->
+<div class="layer">
+  <div class="layer-title">
+    <span class="layer-title-num">Layer 0</span>
+    <span class="layer-title-sep">/</span>
+    <span class="layer-title-name">Raw Data Sources</span>
+  </div>
+
+  <div class="split">
+    <div class="split-col">
+      <div class="split-header bg-node-co c-co">Company-Specific Sources</div>
+      <div class="grid-2">
+        <div class="node bg-node-co">
+          <div class="node-cat c-co">ERP / TMS</div>
+          <div class="node-title">SAP / Oracle</div>
+          <div class="node-desc">POs, incoterms, carrier codes, supplier addresses, delivery history</div>
+          <span class="tag tag-co">Historical POs</span>
+        </div>
+        <div class="node bg-node-co">
+          <div class="node-cat c-co">3PL Portals</div>
+          <div class="node-title">DHL · FedEx · Maersk API</div>
+          <div class="node-desc">Live shipment tracking, in-transit status, delay alerts</div>
+          <span class="tag tag-co">Live tracking</span>
+        </div>
+        <div class="node bg-node-co">
+          <div class="node-cat c-co">Supplier Master</div>
+          <div class="node-title">Internal Supplier DB</div>
+          <div class="node-desc">Vendor addresses, lead times, payment terms, backup suppliers</div>
+          <span class="tag tag-co">Internal</span>
+        </div>
+        <div class="node bg-node-co">
+          <div class="node-cat c-co">Finance</div>
+          <div class="node-title">Supplier Financials</div>
+          <div class="node-desc">D&amp;B health score, payment defaults, credit rating, LinkedIn signals</div>
+          <span class="tag tag-co">D&amp;B API</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="split-col">
+      <div class="split-header bg-node-gl c-gl">Global Data Sources</div>
+      <div class="grid-3">
+        <div class="node bg-node-sea">
+          <div class="node-cat c-sea">Sea</div>
+          <div class="node-title">AIS · MarineTraffic</div>
+          <div class="node-desc">Vessel positions, port calls, speed anomalies, draft changes</div>
+          <span class="tag tag-sea">15 min</span>
+        </div>
+        <div class="node bg-node-air">
+          <div class="node-cat c-air">Air</div>
+          <div class="node-title">OpenSky · NOTAM</div>
+          <div class="node-desc">Flight paths, airspace closures, cargo delays, airport congestion</div>
+          <span class="tag tag-air">Real-time</span>
+        </div>
+        <div class="node bg-node-road">
+          <div class="node-cat c-road">Road/Rail</div>
+          <div class="node-title">OSM · HERE · BTS</div>
+          <div class="node-desc">Border wait times, road closures, protest tracking, rail outages</div>
+          <span class="tag tag-road">Hourly</span>
+        </div>
+        <div class="node bg-node-pipe">
+          <div class="node-cat c-pipe">Pipeline</div>
+          <div class="node-title">EIA · GEM · ENTSOG</div>
+          <div class="node-desc">Oil &amp; gas flows, compressor outages, pipeline capacity</div>
+          <span class="tag tag-pipe">Daily</span>
+        </div>
+        <div class="node bg-node-geo">
+          <div class="node-cat c-geo">Geopolitical</div>
+          <div class="node-title">ACLED · GDELT · Reuters</div>
+          <div class="node-desc">Conflicts, sanctions, tariff changes, protests, war zones</div>
+          <span class="tag tag-geo">Minutes</span>
+        </div>
+        <div class="node">
+          <div class="node-cat c-dim">Weather</div>
+          <div class="node-title">OpenWeather · NOAA</div>
+          <div class="node-desc">Cyclones, storms, port closures, seasonal risk forecasts</div>
+          <span class="tag tag-gray">Hourly</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="flow-arrow"><div class="flow-line"></div>↓ Kafka Ingest<div class="flow-line"></div></div>
+
+<!-- ═══════════════════════════════════════════
+     LAYER 1 — INGESTION
+═══════════════════════════════════════════ -->
+<div class="layer">
+  <div class="layer-title">
+    <span class="layer-title-num">Layer 1</span>
+    <span class="layer-title-sep">/</span>
+    <span class="layer-title-name">Ingestion &amp; Streaming Bus</span>
+  </div>
+  <div class="grid-3">
+    <div class="node bg-node-fast">
+      <div class="node-cat c-fast">Stream ingest</div>
+      <div class="node-title">Apache Kafka</div>
+      <div class="node-desc">All sources publish to topic-separated streams: <code style="font-size:9px;color:var(--fast)">topic.sea · topic.news · topic.company</code>. 7-day replay buffer.</div>
+      <span class="tag tag-fast">Kafka 3.x</span><span class="tag tag-gray">By region</span>
+    </div>
+    <div class="node bg-node-fast">
+      <div class="node-cat c-fast">Normalisation</div>
+      <div class="node-title">Apache Flink</div>
+      <div class="node-desc">Schema validation, deduplication, unit normalisation (UTC, ISO country codes, lat-lng). Outputs clean JSON events in &lt;2s.</div>
+      <span class="tag tag-fast">Flink 1.18</span><span class="tag tag-gray">&lt;2s latency</span>
+    </div>
+    <div class="node bg-node-fast">
+      <div class="node-cat c-fast">Dual-write</div>
+      <div class="node-title">Hot + Cold Store</div>
+      <div class="node-desc">Hot path → Redis (TTL 48h) for instant predictions. Cold path → PostgreSQL + S3 Parquet for training data lake. Both written in parallel.</div>
+      <span class="tag tag-fast">Redis 7</span><span class="tag tag-gray">S3 Parquet</span>
+    </div>
+  </div>
+</div>
+
+<div class="flow-arrow"><div class="flow-line"></div>↓ Graph Construction<div class="flow-line"></div></div>
+
+<!-- ═══════════════════════════════════════════
+     LAYER 2 — ROUTE GRAPH
+═══════════════════════════════════════════ -->
+<div class="layer">
+  <div class="layer-title">
+    <span class="layer-title-num">Layer 2</span>
+    <span class="layer-title-sep">/</span>
+    <span class="layer-title-name">Route Graph Construction — Neo4j</span>
+  </div>
+
+  <div class="split">
+    <div class="split-col">
+      <div class="split-header bg-node-co c-co">Company Route Graph</div>
+      <div class="node bg-node-co" style="margin-bottom:6px">
+        <div class="node-cat c-co">Step 1 · Extract</div>
+        <div class="node-title">Origin–Destination from ERP</div>
+        <div class="node-desc">Pull every PO: supplier_city → delivery_port. Geocode with Maps API. Infer mode from distance + carrier + incoterm.</div>
+      </div>
+      <div class="node bg-node-co" style="margin-bottom:6px">
+        <div class="node-cat c-co">Step 2 · Build</div>
+        <div class="node-title">Neo4j Company Subgraph</div>
+        <div class="node-desc">~50–500 nodes. Edges = transport legs with mode, avg lead time, historical delay rate, cost. Updated weekly.</div>
+        <span class="tag tag-co">Neo4j</span><span class="tag tag-gray">Weekly rebuild</span>
+      </div>
+      <div class="node bg-node-co">
+        <div class="node-cat c-co">Step 3 · Augment</div>
+        <div class="node-title">Precompute Alternate Routes</div>
+        <div class="node-desc">For each primary edge: 2 fallback routes (different ports, modes, 3PLs) stored as backup edges — ready for instant re-routing.</div>
+        <span class="tag tag-co">Dijkstra alt-path</span>
+      </div>
+    </div>
+
+    <div class="split-col">
+      <div class="split-header bg-node-gl c-gl">Global Route Graph</div>
+      <div class="node bg-node-gl" style="margin-bottom:6px">
+        <div class="node-cat c-gl">Step 1 · Load</div>
+        <div class="node-title">OSM + AIS + ICAO + EIA</div>
+        <div class="node-desc">OSM planet → road + rail via OSMnx. AIS vessel tracks → sea corridors. ICAO → air graph. EIA shapefiles → pipeline graph.</div>
+      </div>
+      <div class="node bg-node-gl" style="margin-bottom:6px">
+        <div class="node-cat c-gl">Step 2 · Chokepoints</div>
+        <div class="node-title">25 Global Chokepoints Tagged</div>
+        <div class="node-desc">Hormuz, Suez, Malacca, Panama, Dover, Bosporus... Each tagged with daily traffic volume + geopolitical sensitivity score.</div>
+        <span class="tag tag-gl">chokepoint=true</span>
+      </div>
+      <div class="node bg-node-gl">
+        <div class="node-cat c-gl">Step 3 · Merge</div>
+        <div class="node-title">Neo4j Global Graph</div>
+        <div class="node-desc">Millions of nodes: ports, airports, border crossings, compressor stations. Edges store mode, capacity, disruption frequency.</div>
+        <span class="tag tag-gl">Neo4j</span><span class="tag tag-gray">Monthly rebuild</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="flow-arrow"><div class="flow-line"></div>↓<div class="flow-line"></div></div>
+
+<!-- ═══════════════════════════════════════════
+     ★ LAYER 2B — MULTI-TIER SUPPLIER MAPPING
+═══════════════════════════════════════════ -->
+<div class="layer layer-unique layer-unique-tier">
+  <div class="unique-ribbon ribbon-tier">★ Unique Feature</div>
+  <div class="layer-title">
+    <span class="layer-title-num c-tier">Layer 2B</span>
+    <span class="layer-title-sep">/</span>
+    <span class="layer-title-name c-tier">Multi-Tier Supplier Dependency Mapping</span>
+    <span class="lbadge lbadge-tier">New</span>
+  </div>
+
+  <div class="insight-banner ib-tier">
+    <div class="ib-label c-tier">Why This Matters</div>
+    <strong>Every competitor maps Tier-1 suppliers. We map T1 → T2 → T3 — and automatically propagate cascading risk upstream using Neo4j graph traversal.</strong> A conflict in a neon gas facility in Mariupol triggers a risk alert on your chip fab in Shenzhen before the news breaks.
+  </div>
+
+  <div class="tier-map">
+    <div class="tier-diagram">
+      <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-bottom:14px;letter-spacing:0.12em;text-transform:uppercase">Live graph depth: YOU → T1 → T2 → T3</div>
+      <div class="tier-row">
+        <div class="tier-label c-co">YOU</div>
+        <div class="tier-nodes">
+          <div class="tier-pill" style="background:rgba(74,222,128,0.12);border-color:rgba(74,222,128,0.35);color:var(--company)">Your Distribution Centre</div>
+        </div>
+      </div>
+      <div class="tier-arrow">↓</div>
+      <div class="tier-row">
+        <div class="tier-label c-tier">T1</div>
+        <div class="tier-nodes">
+          <div class="tier-pill" style="background:rgba(0,212,255,0.1);border-color:rgba(0,212,255,0.3);color:var(--tier)">Supplier A · Shanghai</div>
+          <div class="tier-pill" style="background:rgba(0,212,255,0.1);border-color:rgba(0,212,255,0.3);color:var(--tier)">Supplier B · Ho Chi Minh</div>
+          <div class="tier-pill" style="background:rgba(0,212,255,0.1);border-color:rgba(0,212,255,0.3);color:var(--tier)">Supplier C · Chennai</div>
+        </div>
+      </div>
+      <div class="tier-arrow">↓</div>
+      <div class="tier-row">
+        <div class="tier-label" style="color:#60a5fa">T2</div>
+        <div class="tier-nodes">
+          <div class="tier-pill" style="background:rgba(96,165,250,0.1);border-color:rgba(96,165,250,0.28);color:#60a5fa">Chip fab · Shenzhen</div>
+          <div class="tier-pill" style="background:rgba(96,165,250,0.1);border-color:rgba(96,165,250,0.28);color:#60a5fa">Textile mill · Guangzhou</div>
+          <div class="tier-pill" style="background:rgba(248,113,113,0.12);border-color:rgba(248,113,113,0.35);color:var(--geo)">⚠ Motor co. · Kyiv</div>
+        </div>
+      </div>
+      <div class="tier-arrow">↓</div>
+      <div class="tier-row">
+        <div class="tier-label" style="color:var(--air)">T3</div>
+        <div class="tier-nodes">
+          <div class="tier-pill" style="background:rgba(167,139,250,0.1);border-color:rgba(167,139,250,0.25);color:var(--air)">Rare earth · Baotou</div>
+          <div class="tier-pill" style="background:rgba(167,139,250,0.1);border-color:rgba(167,139,250,0.25);color:var(--air)">Resin · Jubail, SA</div>
+          <div class="tier-pill" style="background:rgba(248,113,113,0.14);border-color:rgba(248,113,113,0.38);color:var(--geo)">⚠ Neon gas · Mariupol</div>
+        </div>
+      </div>
+      <div class="tier-warning">⚠ T3 neon supplier in conflict zone → risk propagated upstream → chip fab T2 risk elevated → YOUR 3 product lines at risk</div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div class="node bg-node-tier">
+        <div class="node-cat c-tier">Step 1</div>
+        <div class="node-title">BOM + Supplier Portal Extraction</div>
+        <div class="node-desc">Pull bill-of-materials from SAP/Oracle. Cross-reference with D&amp;B supply chain graph API and Resilinc to resolve T2/T3 sub-suppliers automatically.</div>
+        <span class="tag tag-tier">D&amp;B API</span><span class="tag tag-gray">Resilinc</span>
+      </div>
+      <div class="node bg-node-tier">
+        <div class="node-cat c-tier">Step 2</div>
+        <div class="node-title">Neo4j Deep Dependency Graph</div>
+        <div class="node-desc">Each tier-N node stores: country, risk score, single-source flag, geopolitical exposure. Edges store dependency weight + substitutability score.</div>
+        <span class="tag tag-tier">Neo4j</span><span class="tag tag-gray">Weekly refresh</span>
+      </div>
+      <div class="node bg-node-tier">
+        <div class="node-cat c-tier">Step 3</div>
+        <div class="node-title">Cascading Risk Propagation</div>
+        <div class="node-desc"><code style="font-size:9px;color:var(--tier)">risk_upstream = risk_T3 × dependency_weight × (1 / substitutability)</code> — propagated through graph traversal. Surfaces T3 surprises in real time.</div>
+        <span class="tag tag-tier">Dijkstra propagation</span>
+      </div>
+      <div class="node bg-node-tier">
+        <div class="node-cat c-tier">Step 4</div>
+        <div class="node-title">Concentration Risk Alert</div>
+        <div class="node-desc">Flags any component where &gt;60% supply traces to single country at any tier. Auto-suggests diversification candidates from global DB.</div>
+        <span class="tag tag-tier">Concentration index</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="flow-arrow"><div class="flow-line"></div>↓ Training Pipelines<div class="flow-line"></div></div>
+
+<!-- ═══════════════════════════════════════════
+     LAYER 3 — TRAINING PIPELINES
+═══════════════════════════════════════════ -->
+<div class="layer">
+  <div class="layer-title">
+    <span class="layer-title-num">Layer 3</span>
+    <span class="layer-title-sep">/</span>
+    <span class="layer-title-name">Training Pipelines — Fast &amp; Slow</span>
+  </div>
+  <div class="train-grid">
+    <div class="train-col bg-node-fast">
+      <div class="train-col-head c-fast">
+        <div class="pulse-dot" style="background:var(--fast)"></div>
+        Fast Path — Minutes (no retraining)
+      </div>
+      <div class="node">
+        <div class="node-cat c-fast">Step 1</div>
+        <div class="node-title">DistilBERT NLP Classifier</div>
+        <div class="node-desc">Fine-tuned on supply chain news. Classifies entity (Hormuz, Ukraine, Taiwan), severity (0–1), transport mode. Runs in &lt;300ms per article.</div>
+        <span class="tag tag-fast">HuggingFace</span><span class="tag tag-gray">Monthly retrain</span>
+      </div>
+      <div class="node">
+        <div class="node-cat c-fast">Step 2</div>
+        <div class="node-title">Entity → Route Mapping</div>
+        <div class="node-desc">Entity "Hormuz" → Neo4j query: which company routes cross this edge? Returns affected route IDs in milliseconds.</div>
+        <span class="tag tag-fast">Graph query</span><span class="tag tag-gray">&lt;50ms</span>
+      </div>
+      <div class="node">
+        <div class="node-cat c-fast">Step 3</div>
+        <div class="node-title">Risk Override Injection</div>
+        <div class="node-desc">severity &gt; 0.7 + chokepoint = true → multiply base risk × 3.5. Written to Redis with 72h TTL. Dashboard reads Redis first.</div>
+        <span class="tag tag-fast">Redis write</span><span class="tag tag-gray">Total: &lt;2 min</span>
+      </div>
+    </div>
+
+    <div class="train-col bg-node-slow">
+      <div class="train-col-head c-slow">
+        <div class="pulse-dot" style="background:var(--slow)"></div>
+        Slow Path — Nightly Retraining (2am UTC)
+      </div>
+      <div class="node">
+        <div class="node-cat c-slow">Step 1</div>
+        <div class="node-title">Feature Engineering (Airflow DAG)</div>
+        <div class="node-desc">Pull last 24h from S3. Compute rolling 7/14/30-day disruption rate per route, weather severity index, geopolitical tension, supplier health delta.</div>
+        <span class="tag tag-slow">Apache Airflow</span><span class="tag tag-gray">S3 → Parquet</span>
+      </div>
+      <div class="node">
+        <div class="node-cat c-slow">Step 2</div>
+        <div class="node-title">5 Mode-Specific Models Retrained</div>
+        <div class="node-desc">Sea: LSTM on AIS time-series. Air: LSTM + NOTAM. Road: XGBoost tabular. Geo: NLP transformer. Pipeline: isolation forest anomaly detection.</div>
+        <span class="tag tag-slow">PyTorch</span><span class="tag tag-slow">scikit-learn</span>
+      </div>
+      <div class="node">
+        <div class="node-cat c-slow">Step 3</div>
+        <div class="node-title">MLflow Model Registry</div>
+        <div class="node-desc">New weights evaluated on holdout. If accuracy ≥ previous: auto-promote. Else: rollback safe. Zero-downtime hot-swap via model serving endpoint.</div>
+        <span class="tag tag-slow">MLflow</span><span class="tag tag-gray">A/B tested</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="flow-arrow"><div class="flow-line"></div>↓ Mode Models<div class="flow-line"></div></div>
+
+<!-- ═══════════════════════════════════════════
+     LAYER 4 — FIVE MODE MODELS
+═══════════════════════════════════════════ -->
+<div class="layer">
+  <div class="layer-title">
+    <span class="layer-title-num">Layer 4</span>
+    <span class="layer-title-sep">/</span>
+    <span class="layer-title-name">Mode-Specific Prediction Models</span>
+  </div>
+  <div class="mode-grid">
+    <div class="mode-card bg-node-sea">
+      <span class="mode-icon">⛴</span>
+      <div class="mode-name c-sea">Sea Model</div>
+      <div class="mode-algo">LSTM · 30-day window</div>
+      <div class="mode-features">AIS delay · Port congestion · Cyclone risk · Sanction flags · Piracy zones</div>
+      <span class="tag tag-sea" style="margin-top:8px">Output: 0–1</span>
+    </div>
+    <div class="mode-card bg-node-air">
+      <span class="mode-icon">✈</span>
+      <div class="mode-name c-air">Air Model</div>
+      <div class="mode-algo">LSTM · 14-day window</div>
+      <div class="mode-features">NOTAM alerts · Airspace closures · Airport capacity · Cargo spike</div>
+      <span class="tag tag-air" style="margin-top:8px">Output: 0–1</span>
+    </div>
+    <div class="mode-card bg-node-road">
+      <span class="mode-icon">🚛</span>
+      <div class="mode-name c-road">Road/Rail Model</div>
+      <div class="mode-algo">XGBoost · Tabular</div>
+      <div class="mode-features">Border wait · Protest index · Flood/snow risk · Strike probability</div>
+      <span class="tag tag-road" style="margin-top:8px">Output: 0–1</span>
+    </div>
+    <div class="mode-card bg-node-pipe">
+      <span class="mode-icon">🔧</span>
+      <div class="mode-name c-pipe">Pipeline Model</div>
+      <div class="mode-algo">Isolation Forest</div>
+      <div class="mode-features">Flow rate anomaly · Compressor faults · Conflict proximity · Maintenance</div>
+      <span class="tag tag-pipe" style="margin-top:8px">Output: 0–1</span>
+    </div>
+    <div class="mode-card bg-node-geo">
+      <span class="mode-icon">🌐</span>
+      <div class="mode-name c-geo">Geo Model</div>
+      <div class="mode-algo">DistilBERT NLP</div>
+      <div class="mode-features">Conflict events · Sanctions · Tariff changes · Election instability · War</div>
+      <span class="tag tag-geo" style="margin-top:8px">Output: 0–1</span>
+    </div>
+  </div>
+  <div style="margin-top:12px;padding:12px 16px;background:var(--bg3);border-radius:7px;border:1px solid var(--border);font-size:11px;color:var(--muted)">
+    <span class="c-co" style="font-family:var(--mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase">Company Model</span> — trained only on this company's historical routes + supplier disruptions. High precision, low recall. Best for known lanes. &nbsp;·&nbsp;
+    <span class="c-gl" style="font-family:var(--mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase">Global Model</span> — trained on global disruption history. Lower precision, catches unknown risks. Both run in parallel — final score = weighted average.
+  </div>
+</div>
+
+<div class="flow-arrow"><div class="flow-line"></div>↓<div class="flow-line"></div></div>
+
+<!-- ═══════════════════════════════════════════
+     ★ LAYER 4B — DEMAND SENSING ENGINE
+═══════════════════════════════════════════ -->
+<div class="layer layer-unique layer-unique-demand">
+  <div class="unique-ribbon ribbon-demand">★ Unique Feature</div>
+  <div class="layer-title">
+    <span class="layer-title-num c-demand">Layer 4B</span>
+    <span class="layer-title-sep">/</span>
+    <span class="layer-title-name c-demand">Demand Sensing Engine — "Will Supply Fail Relative to Demand?"</span>
+    <span class="lbadge lbadge-demand">New</span>
+  </div>
+
+  <div class="insight-banner ib-demand">
+    <div class="ib-label c-demand">Paradigm Shift</div>
+    All prior layers answer: <strong>"Will supply fail?"</strong> — This layer answers: <strong style="color:var(--demand)">"Will supply fail relative to what demand will be at that time?"</strong> — A 0.6 risk route under 3× demand spike is more dangerous than a 0.9 risk route at normal volume. Composite risk = supply_risk × demand_amplifier.
+  </div>
+
+  <div class="grid-3" style="margin-bottom:12px">
+    <div class="node bg-node-demand">
+      <div class="node-cat c-demand">Signal 1</div>
+      <div class="node-title">POS + E-Commerce Feeds</div>
+      <div class="node-desc">Real-time point-of-sale, Shopify/Amazon order velocity, cart abandonment rates. Identifies demand spikes 2–4 weeks ahead of traditional forecasts.</div>
+      <span class="tag tag-demand">Hourly</span><span class="tag tag-gray">Shopify API</span>
+    </div>
+    <div class="node bg-node-demand">
+      <div class="node-cat c-demand">Signal 2</div>
+      <div class="node-title">Macro &amp; Seasonal Indicators</div>
+      <div class="node-desc">Google Trends per product category, consumer confidence index, holiday calendar, weather-driven demand spikes. Fed into ARIMA/Prophet forecast.</div>
+      <span class="tag tag-demand">Weekly</span><span class="tag tag-gray">Google Trends API</span>
+    </div>
+    <div class="node bg-node-demand">
+      <div class="node-cat c-demand">Signal 3</div>
+      <div class="node-title">Customer Order Book + Backlog</div>
+      <div class="node-desc">Open order pipeline from ERP, B2B committed orders, retailer replenishment signals (EDI 830). Converts soft signals into confirmed demand volume per SKU.</div>
+      <span class="tag tag-demand">Daily</span><span class="tag tag-gray">EDI 830</span>
+    </div>
+  </div>
+
+  <div class="demand-fusion">
+    <div class="d-ratio">
+      <div class="d-ratio-num">2.4×</div>
+      <div class="d-ratio-label">Demand / Supply<br>Ratio (live)</div>
+      <div style="margin-top:10px"><span class="tag tag-demand">DEMAND SPIKE</span></div>
+    </div>
+    <div>
+      <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-bottom:10px;letter-spacing:0.12em;text-transform:uppercase">Supply–Demand Fusion per SKU / per Route</div>
+      <div class="d-bars">
+        <div class="d-bar-row">
+          <span class="d-bar-name">Forecasted demand</span>
+          <div class="d-bar-bg"><div class="d-bar-fill" style="width:90%;background:var(--demand)"></div></div>
+          <span class="d-bar-val c-demand">24k units</span>
+        </div>
+        <div class="d-bar-row">
+          <span class="d-bar-name">Projected supply</span>
+          <div class="d-bar-bg"><div class="d-bar-fill" style="width:38%;background:var(--geo)"></div></div>
+          <span class="d-bar-val c-geo">10k units</span>
+        </div>
+        <div class="d-bar-row">
+          <span class="d-bar-name">Safety stock</span>
+          <div class="d-bar-bg"><div class="d-bar-fill" style="width:20%;background:var(--slow)"></div></div>
+          <span class="d-bar-val" style="color:var(--slow)">5k units</span>
+        </div>
+        <div class="d-bar-row">
+          <span class="d-bar-name">Projected gap</span>
+          <div class="d-bar-bg"><div class="d-bar-fill" style="width:75%;background:var(--geo)"></div></div>
+          <span class="d-bar-val c-geo">−9k</span>
+        </div>
+      </div>
+      <div style="margin-top:10px;font-family:var(--mono);font-size:9px;color:var(--muted)">composite_risk = supply_risk_score × demand_amplifier_coefficient</div>
+    </div>
+    <div>
+      <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-bottom:8px;letter-spacing:0.12em;text-transform:uppercase">Actions Auto-Triggered</div>
+      <div class="d-actions">
+        <div class="d-action">
+          <div class="d-action-dot"></div>
+          <div>Emergency PO to <strong style="color:#fff">backup supplier</strong> — 8k units, awaiting CFO approval via Slack</div>
+        </div>
+        <div class="d-action">
+          <div class="d-action-dot"></div>
+          <div>Air freight upgrade for <strong style="color:#fff">in-transit shipment</strong> — +$28k cost, prevents stockout</div>
+        </div>
+        <div class="d-action">
+          <div class="d-action-dot"></div>
+          <div><strong style="color:#fff">Demand re-plan</strong> sent to sales — reduce promotions 15%</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="flow-arrow"><div class="flow-line"></div>↓ Ensemble Prediction<div class="flow-line"></div></div>
+
+<!-- ═══════════════════════════════════════════
+     LAYER 5 — ENSEMBLE ENGINE
+═══════════════════════════════════════════ -->
+<div class="layer">
+  <div class="layer-title">
+    <span class="layer-title-num">Layer 5</span>
+    <span class="layer-title-sep">/</span>
+    <span class="layer-title-name">Ensemble Prediction Engine — Example: Hormuz Scenario</span>
+  </div>
+  <div class="ensemble">
+    <div>
+      <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-bottom:12px;letter-spacing:0.1em;text-transform:uppercase">Model contributions</div>
+      <div class="e-bars">
+        <div class="e-bar-row">
+          <span class="e-bar-name c-sea">Sea</span>
+          <div class="e-bar-bg"><div class="e-bar-fill" style="width:91%;background:var(--sea)"></div></div>
+          <span class="e-bar-val c-sea">0.91</span>
+        </div>
+        <div class="e-bar-row">
+          <span class="e-bar-name c-geo">Geo</span>
+          <div class="e-bar-bg"><div class="e-bar-fill" style="width:83%;background:var(--geo)"></div></div>
+          <span class="e-bar-val c-geo">0.83</span>
+        </div>
+        <div class="e-bar-row">
+          <span class="e-bar-name c-road">Road</span>
+          <div class="e-bar-bg"><div class="e-bar-fill" style="width:22%;background:var(--road)"></div></div>
+          <span class="e-bar-val c-road">0.22</span>
+        </div>
+        <div class="e-bar-row">
+          <span class="e-bar-name c-air">Air</span>
+          <div class="e-bar-bg"><div class="e-bar-fill" style="width:31%;background:var(--air)"></div></div>
+          <span class="e-bar-val c-air">0.31</span>
+        </div>
+        <div class="e-bar-row">
+          <span class="e-bar-name c-demand">D/S</span>
+          <div class="e-bar-bg"><div class="e-bar-fill" style="width:78%;background:var(--demand)"></div></div>
+          <span class="e-bar-val c-demand">2.4×</span>
+        </div>
+      </div>
+    </div>
+    <div class="e-center">
+      <div class="e-score-label">Composite Risk Score</div>
+      <div class="e-score-num">0.87</div>
+      <div class="e-score-status">⚠ HIGH RISK</div>
+    </div>
+    <div>
+      <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-bottom:8px;letter-spacing:0.1em;text-transform:uppercase">Recommended actions</div>
+      <div class="e-actions">
+        <div class="e-action">
+          <div class="e-dot" style="background:var(--geo)"></div>
+          <div><strong style="color:#fff;font-size:10px">Critical alert:</strong> Re-route 14 sea lanes via Cape of Good Hope — +22 days, +$2.1M</div>
+        </div>
+        <div class="e-action">
+          <div class="e-dot" style="background:var(--demand)"></div>
+          <div><strong style="color:#fff;font-size:10px">Demand action:</strong> Air-freight upgrade for 3 priority SKUs — $3.4M cost vs $9.2M lost revenue</div>
+        </div>
+        <div class="e-action">
+          <div class="e-dot" style="background:var(--tier)"></div>
+          <div><strong style="color:#fff;font-size:10px">T2 backup:</strong> Activate Malaysia chip fab — +$0.8M, 45-day recovery</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="flow-arrow"><div class="flow-line"></div>↓<div class="flow-line"></div></div>
+
+<!-- ═══════════════════════════════════════════
+     ★ LAYER 7B — WHAT-IF SIMULATION ENGINE
+═══════════════════════════════════════════ -->
+<div class="layer layer-unique layer-unique-agent">
+  <div class="unique-ribbon ribbon-agent">★ Unique Feature</div>
+  <div class="layer-title">
+    <span class="layer-title-num c-agent">Layer 7B</span>
+    <span class="layer-title-sep">/</span>
+    <span class="layer-title-name c-agent">What-If Simulation Engine — Sandbox Scenario Planning</span>
+    <span class="lbadge lbadge-agent">New</span>
+  </div>
+
+  <div class="insight-banner ib-agent">
+    <div class="ib-label c-agent">Decision Support</div>
+    <strong>Turns the platform from a passive speedometer into an active GPS.</strong> Managers run forward-looking scenarios before committing budget — quantifying the cost of inaction vs pre-emptive action. 10,000 Monte Carlo iterations per scenario in under 8 seconds.
+  </div>
+
+  <div class="scenario-grid">
+    <div class="scenario-card">
+      <div class="scenario-label">🌊 Scenario A</div>
+      <div class="scenario-title">"Taiwan Strait closes for 30 days"</div>
+      <div class="scenario-params">
+        <div class="scenario-param"><span>Chokepoint locked</span><span class="scenario-param-val">Taiwan Strait</span></div>
+        <div class="scenario-param"><span>Duration</span><span class="scenario-param-val">30 days</span></div>
+        <div class="scenario-param"><span>Affected routes</span><span class="scenario-param-val">14 lanes</span></div>
+        <div class="scenario-param"><span>Demand amplifier</span><span class="scenario-param-val">1.8×</span></div>
+      </div>
+      <div class="scenario-output">⚠ Stockout in 18 days · Re-route cost $2.1M · Alt: Cape of Good Hope +22 days</div>
+    </div>
+    <div class="scenario-card">
+      <div class="scenario-label">🏭 Scenario B</div>
+      <div class="scenario-title">"Tier-2 Shenzhen supplier fails"</div>
+      <div class="scenario-params">
+        <div class="scenario-param"><span>Node failed</span><span class="scenario-param-val">Chip fab SZ-04</span></div>
+        <div class="scenario-param"><span>Tier impact</span><span class="scenario-param-val">T2 → T1 → YOU</span></div>
+        <div class="scenario-param"><span>Affected SKUs</span><span class="scenario-param-val">3 product lines</span></div>
+        <div class="scenario-param"><span>Recovery time</span><span class="scenario-param-val">~45 days</span></div>
+      </div>
+      <div class="scenario-output">⚠ 3 SKU stockouts in 28 days · Malaysia backup: +$0.8M · D/S ratio: 3.1×</div>
+    </div>
+    <div class="scenario-card">
+      <div class="scenario-label">📈 Scenario C</div>
+      <div class="scenario-title">"Demand spike 2× + Suez delay"</div>
+      <div class="scenario-params">
+        <div class="scenario-param"><span>Demand multiplier</span><span class="scenario-param-val">2.0×</span></div>
+        <div class="scenario-param"><span>Supply delay</span><span class="scenario-param-val">Suez +21 days</span></div>
+        <div class="scenario-param"><span>Safety stock</span><span class="scenario-param-val">14 days cover</span></div>
+        <div class="scenario-param"><span>Projected gap</span><span class="scenario-param-val">−12k units</span></div>
+      </div>
+      <div class="scenario-output">🔴 CRITICAL · Air freight: $3.4M · Lost revenue if no action: $9.2M</div>
+    </div>
+  </div>
+
+  <div class="grid-3" style="margin-top:12px">
+    <div class="node bg-node-agent">
+      <div class="node-cat c-agent">Engine core</div>
+      <div class="node-title">Monte Carlo Simulation</div>
+      <div class="node-desc">10,000 iterations per scenario. Each samples uncertainty distributions (delay days, demand variance, supplier recovery). Returns P50/P90 stockout probability + cost distribution.</div>
+      <span class="tag tag-agent">10k iterations</span><span class="tag tag-gray">&lt;8s runtime</span>
+    </div>
+    <div class="node bg-node-agent">
+      <div class="node-cat c-agent">Graph sandbox</div>
+      <div class="node-title">Neo4j Scenario Fork</div>
+      <div class="node-desc">Spin up isolated graph snapshot (copy-on-write). Apply scenario mutations (close edge, remove node). Re-run Dijkstra for alternate paths. Discard after — production graph untouched.</div>
+      <span class="tag tag-agent">Snapshot isolation</span><span class="tag tag-gray">Neo4j</span>
+    </div>
+    <div class="node bg-node-agent">
+      <div class="node-cat c-agent">Cost–benefit output</div>
+      <div class="node-title">Action ROI Calculator</div>
+      <div class="node-desc">For each scenario: cost of pre-emptive action (re-route, air upgrade, emergency PO) vs expected cost of stockout (lost revenue × probability). Outputs ranked action list with IRR.</div>
+      <span class="tag tag-agent">ROI ranked</span><span class="tag tag-gray">One-click approve</span>
+    </div>
+  </div>
+</div>
+
+<div class="flow-arrow"><div class="flow-line"></div>↓ Outputs<div class="flow-line"></div></div>
+
+<!-- ═══════════════════════════════════════════
+     ★ LAYER 8 — CONVERSATIONAL AI CO-PILOT
+═══════════════════════════════════════════ -->
+<div class="layer layer-unique layer-unique-copilot">
+  <div class="unique-ribbon ribbon-copilot">★ New AI Feature</div>
+  <div class="layer-title">
+    <span class="layer-title-num c-copilot">Layer 8</span>
+    <span class="layer-title-sep">/</span>
+    <span class="layer-title-name c-copilot">Conversational AI Co-Pilot — Natural Language Operations Interface</span>
+    <span class="lbadge lbadge-copilot">New</span>
+  </div>
+
+  <div class="insight-banner ib-copilot">
+    <div class="ib-label c-copilot">Hackathon Differentiator #4</div>
+    <strong>Every competitor has a dashboard. We have a conversation.</strong> A supply chain manager types a plain-English question. The LangGraph agent interprets intent, routes to the right engine (What-If + Demand Sensing + T2/T3 graph), runs the analysis, and returns a ranked action plan + auto-drafted CFO approval email — all in one reply. No clicking through 5 screens.
+  </div>
+
+  <div class="grid-2" style="align-items:start">
+    <div class="chat-demo">
+      <div class="chat-header">
+        <div class="chat-header-dot"></div>
+        Supply Chain Co-Pilot · Live Demo
+      </div>
+      <div class="bubble-user">
+        Hey, if Suez closes next week and our Black Friday demand is 2×, what should I do?
+      </div>
+      <div class="bubble-agent">
+        <div class="bubble-agent-label">🤖 Co-Pilot · Ran What-If Engine + Demand Sensing + T2 Graph</div>
+        <strong style="color:#fff;font-size:11px">I found a critical gap. Here's your ranked action plan:</strong>
+        <div style="margin-top:8px">
+          <div class="ranked-action">
+            <span class="ranked-num">01</span>
+            <span><strong style="color:#fff">Air-freight 3 priority SKUs now</strong> — +$3.4M cost vs $9.2M lost revenue if you wait. ROI: 2.7×</span>
+          </div>
+          <div class="ranked-action">
+            <span class="ranked-num">02</span>
+            <span><strong style="color:#fff">Re-route 14 sea lanes via Cape of Good Hope</strong> — +22 days, +$2.1M. Secures non-priority inventory.</span>
+          </div>
+          <div class="ranked-action">
+            <span class="ranked-num">03</span>
+            <span><strong style="color:#fff">Activate Malaysia T2 chip fab backup</strong> — +$0.8M, 45-day recovery. Covers electronics SKU gap.</span>
+          </div>
+          <div class="ranked-action">
+            <span class="ranked-num">04</span>
+            <span><strong style="color:#fff">Reduce promotions 15%</strong> — demand re-plan sent to sales. Reduces D/S ratio from 2.4× → 1.4×.</span>
+          </div>
+        </div>
+        <div style="margin-top:8px;padding:7px 10px;background:rgba(192,132,252,0.08);border:1px solid rgba(192,132,252,0.2);border-radius:5px;font-size:10px;color:var(--dim)">
+          📧 <strong style="color:var(--copilot)">Draft CFO email generated</strong> — Subject: "Suez + Black Friday Risk: $3.4M pre-emptive action recommended". Ready to send.
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div class="node bg-node-copilot">
+        <div class="node-cat c-copilot">Step 1 · Intent Router</div>
+        <div class="node-title">LangGraph Intent Parser</div>
+        <div class="node-desc">LLM classifies query type: scenario simulation / risk lookup / supplier check / demand alert. Routes to correct sub-agent. Maintains conversation memory for follow-up questions.</div>
+        <span class="tag tag-copilot">LangGraph</span><span class="tag tag-gray">Claude / GPT-4</span>
+      </div>
+      <div class="node bg-node-copilot">
+        <div class="node-cat c-copilot">Step 2 · Tool Orchestration</div>
+        <div class="node-title">Multi-Tool Agent Loop</div>
+        <div class="node-desc">Agent calls: What-If Engine API → Demand Sensing API → T2/T3 graph query → Ensemble score. Aggregates results into a structured response context before LLM generates the reply.</div>
+        <span class="tag tag-copilot">Tool-calling loop</span><span class="tag tag-gray">FastAPI</span>
+      </div>
+      <div class="node bg-node-copilot">
+        <div class="node-cat c-copilot">Step 3 · Response Generation</div>
+        <div class="node-title">Ranked Action Plan + Draft Comms</div>
+        <div class="node-desc">LLM generates: ranked action list with ROI, plain-English risk summary, auto-drafted CFO approval email, one-click Slack dispatch. All grounded in real data from prior steps.</div>
+        <span class="tag tag-copilot">GPT-4 / Claude</span><span class="tag tag-gray">Jinja2 email templates</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="flow-arrow"><div class="flow-line"></div>↓<div class="flow-line"></div></div>
+
+<!-- ═══════════════════════════════════════════
+     ★ LAYER 9 — AUTONOMOUS AGENTIC LOOP
+═══════════════════════════════════════════ -->
+<div class="layer layer-unique layer-unique-agentic">
+  <div class="unique-ribbon ribbon-agentic">★ New AI Feature</div>
+  <div class="layer-title">
+    <span class="layer-title-num c-agentic">Layer 9</span>
+    <span class="layer-title-sep">/</span>
+    <span class="layer-title-name c-agentic">Autonomous Agentic Loop — Detect → Draft → Approve → Execute</span>
+    <span class="lbadge lbadge-agentic">New</span>
+  </div>
+
+  <div class="insight-banner ib-agentic">
+    <div class="ib-label c-agentic">Hackathon Differentiator #5</div>
+    <strong>Every other tool sends an alert and waits for a human to act.</strong> This layer closes the loop autonomously: detects a critical D/S threshold breach, drafts the corrective action, sends it to the right human for one-click approval on Slack, and — on approval — executes the PO directly via SAP BAPI. Not a dashboard. An operating system.
+  </div>
+
+  <div class="agent-loop">
+    <div class="loop-step">
+      <div class="loop-circle">
+        📡
+        <div class="loop-circle-num">1</div>
+      </div>
+      <div class="loop-title c-agentic">Detect</div>
+      <div class="loop-desc">D/S ratio &gt; 1.5× threshold breach per SKU. LangGraph watcher fires.</div>
+    </div>
+    <div class="loop-step">
+      <div class="loop-circle">
+        📝
+        <div class="loop-circle-num">2</div>
+      </div>
+      <div class="loop-title c-agentic">Draft</div>
+      <div class="loop-desc">Agent auto-drafts emergency PO to backup supplier with quantity + cost estimate.</div>
+    </div>
+    <div class="loop-step">
+      <div class="loop-circle">
+        💬
+        <div class="loop-circle-num">3</div>
+      </div>
+      <div class="loop-title c-agentic">Approve</div>
+      <div class="loop-desc">Slack message to CFO with full context. Three buttons: Approve / Modify / Reject.</div>
+    </div>
+    <div class="loop-step">
+      <div class="loop-circle">
+        ⚡
+        <div class="loop-circle-num">4</div>
+      </div>
+      <div class="loop-title c-agentic">Execute</div>
+      <div class="loop-desc">On approval: SAP BAPI call fires PO automatically. Audit log + confirmation reply sent.</div>
+    </div>
+  </div>
+
+  <div class="slack-mock">
+    <div class="slack-header">
+      <div class="slack-bot-icon">🤖</div>
+      SupplyChain OS · #procurement-alerts · just now
+    </div>
+    <div class="slack-msg">
+      <strong style="color:#fff">⚠ Critical gap detected — action required</strong><br><br>
+      I've identified a <strong style="color:var(--geo)">12,000-unit gap</strong> on SKU #ELEC-447 (Electronics) in <strong style="color:var(--demand)">18 days</strong> due to Suez congestion + Black Friday demand spike (D/S ratio: 2.4×).<br><br>
+      <strong style="color:#fff">Proposed action:</strong> Emergency PO to <em>PT Sumber Teknologi, Malaysia</em> — 12,000 units at $8.20/unit = <strong style="color:var(--agentic)">$98,400 total</strong>. Estimated delivery: 14 days. Cost of inaction (stockout): <strong style="color:var(--geo)">$340,000 in lost revenue</strong>.
+    </div>
+    <div class="slack-buttons">
+      <div class="slack-btn slack-btn-approve">✓ Approve &amp; Execute PO</div>
+      <div class="slack-btn slack-btn-modify">✎ Modify</div>
+      <div class="slack-btn slack-btn-reject">✗ Reject</div>
+    </div>
+  </div>
+
+  <div class="grid-3" style="margin-top:12px">
+    <div class="node bg-node-agentic">
+      <div class="node-cat c-agentic">Trigger</div>
+      <div class="node-title">LangGraph Watcher Agent</div>
+      <div class="node-desc">Continuously monitors D/S ratio stream from Demand Engine. Fires when threshold (&gt;1.5×) is breached for any SKU. Passes event to Orchestrator with full context payload.</div>
+      <span class="tag tag-agentic">LangGraph</span><span class="tag tag-gray">Kafka consumer</span>
+    </div>
+    <div class="node bg-node-agentic">
+      <div class="node-cat c-agentic">Orchestrator</div>
+      <div class="node-title">Action Draft + Slack Dispatch</div>
+      <div class="node-desc">Agent queries backup supplier DB, computes best PO (quantity, cost, lead time). Renders Slack Block Kit message with interactive buttons. Routes to correct approver by SKU ownership.</div>
+      <span class="tag tag-agentic">Slack Bolt</span><span class="tag tag-gray">Block Kit</span>
+    </div>
+    <div class="node bg-node-agentic">
+      <div class="node-cat c-agentic">Executor</div>
+      <div class="node-title">SAP BAPI Auto-Execute</div>
+      <div class="node-desc">On Slack button click → webhook fires → SAP BAPI call creates PO in ERP. Writes audit log to PostgreSQL. Sends confirmation + tracking number back to Slack thread.</div>
+      <span class="tag tag-agentic">SAP BAPI</span><span class="tag tag-gray">Audit log</span>
+    </div>
+  </div>
+</div>
+
+<div class="flow-arrow"><div class="flow-line"></div>↓<div class="flow-line"></div></div>
+
+<!-- ═══════════════════════════════════════════
+     ★ LAYER 10 — SUPPLIER HEALTH NARRATIVE
+═══════════════════════════════════════════ -->
+<div class="layer layer-unique layer-unique-health">
+  <div class="unique-ribbon ribbon-health">★ New AI Feature</div>
+  <div class="layer-title">
+    <span class="layer-title-num c-health">Layer 10</span>
+    <span class="layer-title-sep">/</span>
+    <span class="layer-title-name c-health">Supplier Financial Distress Early Warning — LLM Health Narrative</span>
+    <span class="lbadge lbadge-health">New</span>
+  </div>
+
+  <div class="insight-banner ib-health">
+    <div class="ib-label c-health">Hackathon Differentiator #6</div>
+    <strong>D&B gives you a credit score. We give you a paragraph.</strong> This layer fuses weak signals — LinkedIn layoff posts, Glassdoor review trends, CEO departures, AIS shipping volume drops — into a plain-English narrative explaining <em>why</em> a supplier is at risk of failure in the next 90 days. No other supply chain tool does LLM-generated supplier health narratives.
+  </div>
+
+  <div class="grid-2" style="align-items:start">
+    <div class="grid-2" style="grid-column:1">
+      <div class="node bg-node-health">
+        <div class="node-cat c-health">Signal 1</div>
+        <div class="node-title">LinkedIn Workforce Signals</div>
+        <div class="node-desc">Scrape LinkedIn for layoff announcements, headcount decline, hiring freeze posts from supplier employees. Flag when &gt;5% headcount drop detected in 30 days.</div>
+        <span class="tag tag-health">LinkedIn API</span><span class="tag tag-gray">Scraper</span>
+      </div>
+      <div class="node bg-node-health">
+        <div class="node-cat c-health">Signal 2</div>
+        <div class="node-title">Glassdoor Sentiment Trend</div>
+        <div class="node-desc">Track 30-day rolling average Glassdoor rating. A rating drop of &gt;0.4 stars is correlated with financial distress and operational instability in 68% of cases historically.</div>
+        <span class="tag tag-health">Glassdoor API</span><span class="tag tag-gray">Sentiment NLP</span>
+      </div>
+      <div class="node bg-node-health">
+        <div class="node-cat c-health">Signal 3</div>
+        <div class="node-title">C-Suite Departure Tracker</div>
+        <div class="node-desc">Monitor LinkedIn + news for CEO, CFO, COO departures. Sudden C-suite exits correlate strongly with upcoming financial difficulty or acquisition — flagged as medium-high risk.</div>
+        <span class="tag tag-health">News APIs</span><span class="tag tag-gray">GDELT</span>
+      </div>
+      <div class="node bg-node-health">
+        <div class="node-cat c-health">Signal 4</div>
+        <div class="node-title">AIS Outbound Volume Drop</div>
+        <div class="node-desc">Track shipping volume leaving supplier's origin port. A &gt;25% drop vs 90-day rolling average indicates production slowdown or financial constraint — often before any public disclosure.</div>
+        <span class="tag tag-health">MarineTraffic AIS</span><span class="tag tag-gray">15 min</span>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div class="node bg-node-health">
+        <div class="node-cat c-health">LLM Fusion</div>
+        <div class="node-title">GPT-4 Narrative Generator</div>
+        <div class="node-desc">All 4 signals + D&B score + news mentions fed into a structured prompt. LLM generates a 2–3 sentence plain-English health narrative explaining the specific evidence for the risk assessment, with a confidence rating.</div>
+        <span class="tag tag-health">GPT-4 / Claude</span><span class="tag tag-gray">Structured prompt</span>
+      </div>
+
+      <div class="health-narrative">
+        <div class="health-narrative-header">
+          <div class="health-narrative-title">🩺 Health Narrative — Supplier: Chip Fab SZ-04, Shenzhen</div>
+          <div class="health-score-badge">Risk: HIGH · 78/100</div>
+        </div>
+        <div class="health-narrative-text">
+          "Chip Fab SZ-04 shows compounding distress signals across three independent dimensions. LinkedIn data indicates a 12% headcount reduction over the past 6 weeks, consistent with financial constraint rather than seasonal adjustment. Glassdoor ratings have declined 0.6 stars in 30 days — a pattern historically preceding operational disruption. AIS data shows outbound container volume from Yantian Port is down 31% vs the 90-day average. Taken together, there is an elevated probability of fulfillment failure within 60–90 days. Recommend activating the Malaysia backup (PT Sumber Teknologi) as a parallel source within 2 weeks."
+        </div>
+        <div class="health-signals">
+          <div class="health-signal"><div class="health-signal-dot"></div>LinkedIn: −12% headcount (6 weeks)</div>
+          <div class="health-signal"><div class="health-signal-dot"></div>Glassdoor: −0.6★ in 30 days</div>
+          <div class="health-signal"><div class="health-signal-dot"></div>AIS volume: −31% vs 90-day avg</div>
+          <div class="health-signal"><div class="health-signal-dot"></div>D&B score: 42 (down from 61)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="flow-arrow"><div class="flow-line"></div>↓ Outputs<div class="flow-line"></div></div>
+
+<!-- ═══════════════════════════════════════════
+     LAYER 6 — OUTPUTS
+═══════════════════════════════════════════ -->
+<div class="layer">
+  <div class="layer-title">
+    <span class="layer-title-num">Layer 6</span>
+    <span class="layer-title-sep">/</span>
+    <span class="layer-title-name">Output Layer — Interfaces &amp; Automated Actions</span>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+    <div class="out-card">
+      <div class="out-card-head">
+        <div class="out-card-dot" style="background:var(--sea)"></div>
+        <div class="out-card-title">Live Risk Dashboard</div>
+      </div>
+      <div class="out-card-desc">Real-time world map: all active routes with risk colour. Chokepoint overlays, alert timeline, supplier tier map view (D3 force-directed graph). Mapbox + React.</div>
+      <div class="out-card-tech">React · Mapbox · D3 · Cytoscape.js</div>
+    </div>
+    <div class="out-card">
+      <div class="out-card-head">
+        <div class="out-card-dot" style="background:var(--fast)"></div>
+        <div class="out-card-title">Smart Alert Engine</div>
+      </div>
+      <div class="out-card-desc">LangGraph AI agent fires targeted alerts per supply chain manager — by route ownership, SKU responsibility, severity threshold. Slack + email. Includes suggested action with one-click approve.</div>
+      <div class="out-card-tech">LangGraph · Slack Bolt · FastAPI</div>
+    </div>
+    <div class="out-card" style="border-color:rgba(255,107,53,0.3);background:rgba(255,107,53,0.04)">
+      <div class="out-card-head">
+        <div class="out-card-dot" style="background:var(--agent)"></div>
+        <div class="out-card-title">What-If Simulator <span class="lbadge lbadge-agent" style="vertical-align:middle">New</span></div>
+      </div>
+      <div class="out-card-desc">Sandbox: lock any chokepoint for N days, simulate T2 supplier failure, stress-test demand spikes. See cascading stockout risk across all downstream routes in real time.</div>
+      <div class="out-card-tech">React · Neo4j · Monte Carlo · Demand Engine</div>
+    </div>
+    <div class="out-card">
+      <div class="out-card-head">
+        <div class="out-card-dot" style="background:var(--pipe)"></div>
+        <div class="out-card-title">Weekly Digest PDF</div>
+      </div>
+      <div class="out-card-desc">Auto-generated: top 5 route risks, model accuracy for the week, saved cost estimate, upcoming seasonal risks, recommended pre-emptive actions.</div>
+      <div class="out-card-tech">Jinja2 · WeasyPrint · S3</div>
+    </div>
+    <div class="out-card" style="border-color:rgba(0,212,255,0.3);background:rgba(0,212,255,0.04)">
+      <div class="out-card-head">
+        <div class="out-card-dot" style="background:var(--tier)"></div>
+        <div class="out-card-title">Supplier Tier Map View <span class="lbadge lbadge-tier" style="vertical-align:middle">New</span></div>
+      </div>
+      <div class="out-card-desc">Interactive T1→T2→T3 dependency graph. Click any node: risk score, single-source exposure, alternate supplier suggestions. Highlights hidden T3 concentration risks in conflict zones.</div>
+      <div class="out-card-tech">React · Neo4j · D3 force-directed · Cytoscape.js</div>
+    </div>
+    <div class="out-card" style="border-color:rgba(255,214,10,0.3);background:rgba(255,214,10,0.04)">
+      <div class="out-card-head">
+        <div class="out-card-dot" style="background:var(--demand)"></div>
+        <div class="out-card-title">Demand–Supply Alert <span class="lbadge lbadge-demand" style="vertical-align:middle">New</span></div>
+      </div>
+      <div class="out-card-desc">Fires when D/S ratio crosses 1.5× per SKU. Alert includes: projected gap in units, days to stockout, cost of air-freight upgrade vs lost-revenue, automated draft PO to backup supplier.</div>
+      <div class="out-card-tech">Slack Bolt · LangGraph · FastAPI · D/S engine</div>
+    </div>
+    <div class="out-card" style="border-color:rgba(192,132,252,0.3);background:rgba(192,132,252,0.04)">
+      <div class="out-card-head">
+        <div class="out-card-dot" style="background:var(--copilot)"></div>
+        <div class="out-card-title">AI Co-Pilot Chat <span class="lbadge lbadge-copilot" style="vertical-align:middle">New</span></div>
+      </div>
+      <div class="out-card-desc">Natural language interface to the full platform. Ask any scenario question, get ranked action plan + auto-drafted CFO email. The demo moment that wins hackathons.</div>
+      <div class="out-card-tech">LangGraph · GPT-4 / Claude · FastAPI · React chat UI</div>
+    </div>
+    <div class="out-card" style="border-color:rgba(74,222,128,0.3);background:rgba(74,222,128,0.04)">
+      <div class="out-card-head">
+        <div class="out-card-dot" style="background:var(--agentic)"></div>
+        <div class="out-card-title">Autonomous PO Agent <span class="lbadge lbadge-agentic" style="vertical-align:middle">New</span></div>
+      </div>
+      <div class="out-card-desc">Detect → Draft → Approve → Execute loop. D/S breach fires agent, drafts PO, sends Slack approval to CFO, executes via SAP BAPI on one-click. Full audit trail.</div>
+      <div class="out-card-tech">LangGraph · Slack Bolt · SAP BAPI · PostgreSQL audit log</div>
+    </div>
+    <div class="out-card" style="border-color:rgba(251,113,133,0.3);background:rgba(251,113,133,0.04)">
+      <div class="out-card-head">
+        <div class="out-card-dot" style="background:var(--health)"></div>
+        <div class="out-card-title">Supplier Health Narratives <span class="lbadge lbadge-health" style="vertical-align:middle">New</span></div>
+      </div>
+      <div class="out-card-desc">LLM-generated plain-English paragraph per supplier explaining distress signals. LinkedIn layoffs + Glassdoor trend + CEO departure + AIS volume drop fused into one readable story.</div>
+      <div class="out-card-tech">GPT-4 / Claude · LinkedIn API · Glassdoor · GDELT · AIS</div>
+    </div>
+  </div>
+</div>
+
+<div class="flow-arrow"><div class="flow-line"></div>↓ Full Stack<div class="flow-line"></div></div>
+
+<!-- ═══════════════════════════════════════════
+     TECH STACK
+═══════════════════════════════════════════ -->
+<div class="layer">
+  <div class="layer-title">
+    <span class="layer-title-num c-dim">Stack</span>
+    <span class="layer-title-sep">/</span>
+    <span class="layer-title-name c-dim">Full Technology Stack</span>
+  </div>
+  <div class="stack-wrap">
+    <span class="tag tag-fast" style="font-size:10px;padding:4px 11px">Apache Kafka</span>
+    <span class="tag tag-fast" style="font-size:10px;padding:4px 11px">Apache Flink</span>
+    <span class="tag tag-slow" style="font-size:10px;padding:4px 11px">Apache Airflow</span>
+    <span class="tag tag-slow" style="font-size:10px;padding:4px 11px">MLflow</span>
+    <span class="tag tag-slow" style="font-size:10px;padding:4px 11px">PyTorch LSTM</span>
+    <span class="tag tag-slow" style="font-size:10px;padding:4px 11px">scikit-learn XGBoost</span>
+    <span class="tag tag-fast" style="font-size:10px;padding:4px 11px">HuggingFace DistilBERT</span>
+    <span class="tag tag-gl"   style="font-size:10px;padding:4px 11px">Neo4j</span>
+    <span class="tag tag-fast" style="font-size:10px;padding:4px 11px">Redis</span>
+    <span class="tag tag-slow" style="font-size:10px;padding:4px 11px">PostgreSQL</span>
+    <span class="tag tag-co"   style="font-size:10px;padding:4px 11px">S3 + Parquet</span>
+    <span class="tag tag-sea"  style="font-size:10px;padding:4px 11px">MarineTraffic API</span>
+    <span class="tag tag-air"  style="font-size:10px;padding:4px 11px">OpenSky Network</span>
+    <span class="tag tag-road" style="font-size:10px;padding:4px 11px">OSMnx</span>
+    <span class="tag tag-pipe" style="font-size:10px;padding:4px 11px">EIA / GEM</span>
+    <span class="tag tag-geo"  style="font-size:10px;padding:4px 11px">ACLED / GDELT</span>
+    <span class="tag tag-fast" style="font-size:10px;padding:4px 11px">LangGraph</span>
+    <span class="tag tag-slow" style="font-size:10px;padding:4px 11px">Slack Bolt</span>
+    <span class="tag tag-co"   style="font-size:10px;padding:4px 11px">FastAPI</span>
+    <span class="tag tag-gl"   style="font-size:10px;padding:4px 11px">React + Mapbox</span>
+    <span class="tag tag-gray" style="font-size:10px;padding:4px 11px">Docker + Kubernetes</span>
+    <span class="tag tag-gray" style="font-size:10px;padding:4px 11px">D&amp;B API</span>
+    <span class="tag tag-gray" style="font-size:10px;padding:4px 11px">SAP BAPI</span>
+    <span class="tag tag-tier" style="font-size:10px;padding:4px 11px">Resilinc API</span>
+    <span class="tag tag-tier" style="font-size:10px;padding:4px 11px">Cytoscape.js</span>
+    <span class="tag tag-agent" style="font-size:10px;padding:4px 11px">Monte Carlo Engine</span>
+    <span class="tag tag-demand" style="font-size:10px;padding:4px 11px">Google Trends API</span>
+    <span class="tag tag-demand" style="font-size:10px;padding:4px 11px">Prophet / ARIMA</span>
+    <span class="tag tag-demand" style="font-size:10px;padding:4px 11px">EDI 830</span>
+    <span class="tag tag-demand" style="font-size:10px;padding:4px 11px">Shopify API</span>
+    <span class="tag tag-copilot" style="font-size:10px;padding:4px 11px">LangGraph Co-Pilot</span>
+    <span class="tag tag-copilot" style="font-size:10px;padding:4px 11px">GPT-4 / Claude API</span>
+    <span class="tag tag-agentic" style="font-size:10px;padding:4px 11px">Slack Block Kit</span>
+    <span class="tag tag-agentic" style="font-size:10px;padding:4px 11px">SAP BAPI Auto-Execute</span>
+    <span class="tag tag-health"  style="font-size:10px;padding:4px 11px">LinkedIn Scraper</span>
+    <span class="tag tag-health"  style="font-size:10px;padding:4px 11px">Glassdoor API</span>
+    <span class="tag tag-health"  style="font-size:10px;padding:4px 11px">LLM Narrative Engine</span>
+  </div>
+</div>
+
+</div><!-- /canvas -->
+
+</body>
+</html>

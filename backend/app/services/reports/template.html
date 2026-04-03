@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Weekly Intelligence Digest</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&display=swap');
+    
+    @page {
+      size: A4;
+      margin: 20mm;
+      @bottom-center {
+        content: "Supply Chain Intelligence OS | Strictly Confidential | Page " counter(page);
+        font-family: 'Courier New', monospace;
+        font-size: 8pt;
+        color: #7f8c8d;
+      }
+    }
+    
+    body {
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      color: #2c3e50;
+      line-height: 1.6;
+      margin: 0;
+      padding: 0;
+      background: #ffffff;
+    }
+    
+    .header {
+      border-bottom: 3px solid #00d4ff;
+      padding-bottom: 20px;
+      margin-bottom: 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+    
+    .brand {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 24pt;
+      font-weight: bold;
+      color: #0d1b2a;
+      letter-spacing: -0.5px;
+      margin: 0;
+    }
+    
+    .subtitle {
+      font-family: 'Courier New', Courier, monospace;
+      color: #ff6b35;
+      font-size: 10pt;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+    
+    .date-stamp {
+      font-family: monospace;
+      color: #7f8c8d;
+      font-size: 10pt;
+    }
+    
+    .section-title {
+      font-family: 'Space Grotesk', sans-serif;
+      background: #f4f6f7;
+      border-left: 4px solid #1b263b;
+      padding: 8px 12px;
+      font-size: 14pt;
+      color: #1b263b;
+      margin-top: 30px;
+      margin-bottom: 15px;
+    }
+    
+    .metric-grid {
+      display: table;
+      width: 100%;
+      margin-bottom: 20px;
+      table-layout: fixed;
+    }
+    
+    .metric-box {
+      display: table-cell;
+      border: 1px solid #ecf0f1;
+      padding: 15px;
+      text-align: center;
+      background: #fafbfc;
+    }
+    
+    .metric-value {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 22pt;
+      font-weight: bold;
+      color: #00d4ff;
+    }
+    .metric-value.savings { color: #4ade80; }
+    .metric-value.accuracy { color: #c084fc; }
+    
+    .metric-label {
+      font-family: monospace;
+      font-size: 8pt;
+      color: #95a5a6;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-top: 5px;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+    
+    th, td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #ecf0f1;
+      text-align: left;
+      font-size: 10pt;
+    }
+    
+    th {
+      font-family: monospace;
+      text-transform: uppercase;
+      color: #7f8c8d;
+      background: #fdfefe;
+      letter-spacing: 1px;
+      font-size: 8pt;
+    }
+    
+    .severity-badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 3px;
+      font-family: monospace;
+      font-weight: bold;
+      font-size: 8pt;
+    }
+    .severity-CRITICAL { background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; }
+    .severity-HIGH { background: #ffedd5; color: #ea580c; border: 1px solid #fed7aa; }
+    .severity-MEDIUM { background: #fef9c3; color: #ca8a04; border: 1px solid #fef08a; }
+    
+    .action-box {
+      border: 1px solid #00d4ff;
+      background: #e0f7fa;
+      padding: 15px;
+      border-radius: 4px;
+      margin-top: 30px;
+    }
+    
+    .action-box h4 {
+      margin-top: 0;
+      color: #00838f;
+      font-family: 'Space Grotesk', sans-serif;
+    }
+    
+    .action-box p {
+      margin-bottom: 0;
+      font-size: 10pt;
+      color: #006064;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div>
+      <div class="subtitle">AI Executive Brief</div>
+      <h1 class="brand">Supply Chain OS</h1>
+    </div>
+    <div class="date-stamp">Generated: {{ current_date }}</div>
+  </div>
+
+  <div class="metric-grid">
+    <div class="metric-box">
+      <div class="metric-value savings">{{ savings_estimate }}</div>
+      <div class="metric-label">Auto-PO Savings (WTD)</div>
+    </div>
+    <div class="metric-box">
+      <div class="metric-value accuracy">{{ model_accuracy }}</div>
+      <div class="metric-label">Prophet Demand Accuracy</div>
+    </div>
+    <div class="metric-box">
+      <div class="metric-value">{{ anomalies_detected }}</div>
+      <div class="metric-label">Risk Tier Anomalies</div>
+    </div>
+  </div>
+
+  <div class="section-title">Top 5 Route & Supplier Risks</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Severity</th>
+        <th>Target Asset</th>
+        <th>Intelligence Summary</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for risk in top_risks %}
+      <tr>
+        <td><span class="severity-badge severity-{{ risk.severity }}">{{ risk.severity }}</span></td>
+        <td style="font-weight: bold;">{{ risk.asset }}</td>
+        <td>{{ risk.summary }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="section-title">Upcoming Seasonal Indicators</div>
+  <ul>
+    {% for note in seasonal_alerts %}
+    <li style="font-size: 10pt; margin-bottom: 8px;"><b>{{ note.event }}:</b> {{ note.impact }}</li>
+    {% endfor %}
+  </ul>
+
+  <div class="action-box">
+    <h4>Copilot Recommended Strategy</h4>
+    <p>{{ recommended_strategy }}</p>
+  </div>
+
+</body>
+</html>

@@ -1,0 +1,35 @@
+# ══════════════════════════════════════════════════════════════════════════════
+#  Supply Chain Intelligence OS — Docker Compose Override (Development)
+#  This file is automatically merged with docker-compose.yml by Docker Compose.
+#  It exposes all service ports to localhost and mounts source directories
+#  for live-reload development.
+# ══════════════════════════════════════════════════════════════════════════════
+
+services:
+
+  postgres:
+    ports:
+      - "5432:5432"
+
+  redis:
+    ports:
+      - "6379:6379"
+
+  zookeeper:
+    ports:
+      - "2181:2181"
+
+  kafka:
+    ports:
+      # Internal broker (9092) + host-accessible listener (9093)
+      - "9093:9093"
+
+
+  neo4j:
+    ports:
+      - "7474:7474"   # HTTP browser UI
+      - "7687:7687"   # Bolt protocol
+
+  mlflow:
+    ports:
+      - "5000:5000"
