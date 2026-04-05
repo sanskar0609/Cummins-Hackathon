@@ -9,7 +9,43 @@ from app.core.logging import log
 
 router = APIRouter()
 
-# ... (chokepoints logic omitted for brevity, same as before) ...
+
+# ── Pydantic Models ────────────────────────────────────────────────────────────
+class SupplierNode(BaseModel):
+    supplier_id:   Optional[str] = None
+    supplier_name: Optional[str] = None
+    name:          Optional[str] = None
+    id:            Optional[str] = None
+    tier:          Optional[str] = "T1"
+    country:       Optional[str] = None
+    location:      Optional[str] = None
+    dependency:    Optional[float] = 0.8
+    substitutability: Optional[float] = 0.5
+    substitute:    Optional[float] = None
+    parent_supplier: Optional[str] = None
+    parent:        Optional[str] = None
+
+
+class MultiTierRequest(BaseModel):
+    nodes: List[Dict[str, Any]]
+    demand_multiplier: Optional[float] = 1.0
+
+
+# ── Chokepoints ────────────────────────────────────────────────────────────────
+@router.get("/chokepoints")
+async def get_chokepoints():
+    """Returns global maritime chokepoint risk scores."""
+    chokepoints = [
+        {"id": "SUEZ",      "name": "Suez Canal",        "lat": 30.5,  "lon": 32.3,  "risk": 0.72, "traffic": "High",   "alert": "Houthi attacks ongoing"},
+        {"id": "HORMUZ",    "name": "Strait of Hormuz",  "lat": 26.6,  "lon": 56.3,  "risk": 0.65, "traffic": "High",   "alert": "Iran tensions"},
+        {"id": "MALACCA",   "name": "Strait of Malacca", "lat": 2.5,   "lon": 102.0, "risk": 0.45, "traffic": "High",   "alert": "Piracy risk moderate"},
+        {"id": "BOSPHORUS", "name": "Bosphorus Strait",  "lat": 41.1,  "lon": 29.0,  "risk": 0.35, "traffic": "Medium", "alert": "Normal"},
+        {"id": "GIBRALTAR", "name": "Strait of Gibraltar","lat": 35.9,  "lon": -5.6,  "risk": 0.20, "traffic": "Medium", "alert": "Normal"},
+        {"id": "DOVER",     "name": "Dover Strait",       "lat": 51.1,  "lon": 1.4,   "risk": 0.15, "traffic": "High",   "alert": "Normal"},
+        {"id": "LOMBOK",    "name": "Lombok Strait",      "lat": -8.8,  "lon": 115.7, "risk": 0.18, "traffic": "Low",    "alert": "Normal"},
+        {"id": "TAIWAN",    "name": "Taiwan Strait",      "lat": 24.3,  "lon": 119.5, "risk": 0.68, "traffic": "High",   "alert": "Geopolitical tension high"},
+    ]
+    return {"chokepoints": chokepoints, "count": len(chokepoints)}
 
 @router.post("/multi-tier-propagation")
 async def propagate_supplier_risk(req: MultiTierRequest):
