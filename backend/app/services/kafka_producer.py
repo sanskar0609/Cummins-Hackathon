@@ -1,4 +1,5 @@
 import json
+import os
 from typing import Any, Dict
 from app.core.logging import log
 
@@ -7,6 +8,22 @@ from app.core.logging import log
 # calls degrade silently so every FastAPI endpoint still returns 200.
 
 _producer = None
+
+def _setup_aiven_ssl_certs():
+    """Reads Aiven Kafka certs from Render environment variables and writes them to files."""
+    kafa_ca = os.getenv("KAFKA_CA")
+    if not kafa_ca:
+        return False
+        
+    with open("ca.pem", "w") as f:
+        # Replace literal \n with real newlines just in case they are escaped
+        f.write(kafa_ca.replace("\\n", "\n"))
+    with open("service.cert", "w") as f:
+        f.write(os.getenv("KAFKA_CERT", "").replace("\\n", "\n"))
+    with open("service.key", "w") as f:
+        f.write(os.getenv("KAFKA_KEY", "").replace("\\n", "\n"))
+        
+    return True
 
 def _get_producer():
     """Lazily initialise the Kafka producer exactly once.
@@ -24,6 +41,17 @@ def _get_producer():
             'socket.timeout.ms': 3000,
             'message.timeout.ms': 3000,
         }
+        
+        # Inject Aiven SSL Configuration if certificates are present in Env
+        if _setup_aiven_ssl_certs():
+            conf.update({
+                'security.protocol': 'SSL',
+                'ssl.ca.location': 'ca.pem',
+                'ssl.certificate.location': 'service.cert',
+                'ssl.key.location': 'service.key'
+            })
+            log.info("kafka_aiven_ssl_configured")
+            
         _producer = Producer(conf)
         log.info("kafka_producer_initialised")
     except Exception as e:

@@ -1,9 +1,25 @@
 import json
+import os
 import asyncio
 from typing import Callable, Coroutine, Any, Dict, List
 from confluent_kafka import Consumer, KafkaException
 from app.core.config import settings
 from app.core.logging import log
+
+def _setup_aiven_ssl_certs():
+    """Reads Aiven Kafka certs from Render environment variables and writes them to files."""
+    kafa_ca = os.getenv("KAFKA_CA")
+    if not kafa_ca:
+        return False
+        
+    with open("ca.pem", "w") as f:
+        f.write(kafa_ca.replace("\\n", "\n"))
+    with open("service.cert", "w") as f:
+        f.write(os.getenv("KAFKA_CERT", "").replace("\\n", "\n"))
+    with open("service.key", "w") as f:
+        f.write(os.getenv("KAFKA_KEY", "").replace("\\n", "\n"))
+        
+    return True
 
 class KafkaConsumerService:
     def __init__(self, group_id: str, topics: List[str]):
@@ -20,6 +36,16 @@ class KafkaConsumerService:
             'auto.offset.reset': 'earliest',
             'enable.auto.commit': False
         }
+        
+        if _setup_aiven_ssl_certs():
+            self.consumer_conf.update({
+                'security.protocol': 'SSL',
+                'ssl.ca.location': 'ca.pem',
+                'ssl.certificate.location': 'service.cert',
+                'ssl.key.location': 'service.key'
+            })
+            log.info("kafka_consumer_aiven_ssl_configured")
+            
         self.consumer = Consumer(self.consumer_conf)
 
     async def start(self, message_handler: Callable[[str, Dict[str, Any]], Coroutine[Any, Any, None]]):
