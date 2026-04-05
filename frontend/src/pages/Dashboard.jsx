@@ -453,7 +453,7 @@ export default function Dashboard() {
   })
 
   // Use live data or fallback — never undefined
-  const chokepoints = rawChokepoints || FALLBACK_CHOKEPOINTS
+  const chokepoints = rawChokepoints?.chokepoints || FALLBACK_CHOKEPOINTS
   const vessels     = rawVessels    || { features: [] }
 
   const handleRefresh = useCallback(() => {
