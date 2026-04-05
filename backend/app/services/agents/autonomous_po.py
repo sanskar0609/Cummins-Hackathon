@@ -1,6 +1,4 @@
 import json
-from google import genai
-from google.genai import types
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 from langgraph.graph import StateGraph, END
@@ -10,8 +8,7 @@ from app.db.session import SessionLocal
 from app.models.po_draft import PODraft, POStatus as PODraftStatus
 from app.core.config import settings
 from app.core.logging import log
-
-_client = genai.Client(api_key=settings.GEMINI_API_KEY) if settings.GEMINI_API_KEY else None
+from app.core.gemini_rotator import generate_content_with_retry as _gemini_gen
 
 class POAgentState(TypedDict):
     telemetry: dict
@@ -46,24 +43,18 @@ def draft_po_node(state: POAgentState) -> POAgentState:
     Output STRICTLY as JSON:
     {{
        "sku": "...",
-       "supplier_id": "...",
+       "supplier_id": 1,
+       "company_id": 0,
        "quantity_to_order": 0,
        "estimated_unit_cost": 0.0,
        "justification": "..."
     }}
     """
-    if not _client:
-        state["po_draft"] = None
-        state["bapi_status"] = "GEMINI_NOT_CONFIGURED"
-        return state
-
     try:
-        response = _client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=prompt,
-            config=types.GenerateContentConfig(response_mime_type="application/json")
-        )
-        state["po_draft"] = json.loads(response.text)
+        # Gemini rotator (5 keys round-robin) → auto falls back to Groq on full exhaustion
+        raw = _gemini_gen(prompt, model_name="gemini-2.0-flash")
+        clean = raw.replace("```json", "").replace("```", "").strip()
+        state["po_draft"] = json.loads(clean)
     except Exception as e:
         log.error("gemini_po_drafting_error", error=str(e))
         state["po_draft"] = None
@@ -114,26 +105,54 @@ def execute_mock_bapi_node(state: POAgentState) -> POAgentState:
     po = state["po_draft"]
     db: Session = SessionLocal()
     try:
+        supplier_id_val = po.get("supplier_id", 1)
+        if isinstance(supplier_id_val, str) and not supplier_id_val.isdigit():
+            supplier_id_val = 1
+            
+        # Enforce company_id from telemetry to prevent any AI-driven data cross-contamination
+        cid = state["telemetry"].get("company_id")
+            
         draft = PODraft(
-            sku=po.get("sku", "UNKNOWN"),
-            supplier_id=po.get("supplier_id", "UNKNOWN"),
+            company_profile_id=cid,
+            sku=po.get("sku", "UNKNOWN")[:20],
+            supplier_id=int(supplier_id_val),
             quantity=po.get("quantity_to_order", 0),
             unit_cost=po.get("estimated_unit_cost", 0.0),
             ai_justification=po.get("justification", ""),
             total_value=po.get("quantity_to_order", 0) * po.get("estimated_unit_cost", 0.0),
-            status=PODraftStatus.APPROVED_PENDING_ERP
+            status=PODraftStatus.PENDING_APPROVAL
         )
         db.add(draft)
         db.commit()
-        log.info("po_agent_bapi_stubbed_and_audited")
-        state["bapi_status"] = "SUCCESS_LOGGED_TO_DB"
+        db.refresh(draft)
+        log.info("po_agent_draft_created", id=draft.id, company_id=cid)
+        state["po_draft"]["id"] = draft.id
+        state["bapi_status"] = "DRAFT_SAVED"
     except Exception as e:
-        log.error("bapi_commit_error", error=str(e))
+        log.error("po_agent_db_save_error", error=str(e))
         state["bapi_status"] = "DB_PERSISTENCE_ERROR"
     finally:
         db.close()
 
     return state
+
+def finalize_po_execution(po_id: int, approved_by: str = "MANUAL_UI") -> dict:
+    db: Session = SessionLocal()
+    try:
+        draft = db.query(PODraft).filter(PODraft.id == po_id).first()
+        if not draft:
+            return {"status": "error", "message": "PO Draft not found"}
+        
+        draft.status = PODraftStatus.APPROVED
+        draft.approved_by = approved_by
+        db.commit()
+        log.info("po_finalized", id=po_id, approved_by=approved_by)
+        return {"status": "success", "po_id": po_id}
+    except Exception as e:
+        db.rollback()
+        return {"status": "error", "message": str(e)}
+    finally:
+        db.close()
 
 # ─── LANGGRAPH TOPOLOGY ────────────────────────────────────────────────────────
 po_workflow = StateGraph(POAgentState)

@@ -11,8 +11,9 @@ import Simulator from './pages/Simulator'
 
 
 import Copilot from './pages/Copilot'
-
 import Alerts from './pages/Alerts'
+import Onboarding from './pages/Onboarding'
+import Rerouting from './pages/Rerouting'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -33,9 +34,11 @@ function App() {
             <Route index element={<Dashboard />} />
             <Route path="suppliers" element={<Suppliers />} />
             <Route path="demand" element={<Demand />} />
+            <Route path="rerouting" element={<Rerouting />} />
             <Route path="simulator" element={<Simulator />} />
             <Route path="copilot" element={<Copilot />} />
             <Route path="alerts" element={<Alerts />} />
+            <Route path="setup" element={<Onboarding />} />
           </Route>
         </Routes>
       </Router>

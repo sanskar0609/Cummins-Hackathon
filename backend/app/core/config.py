@@ -18,22 +18,22 @@ class Settings(BaseSettings):
     POSTGRES_USER: str = Field("scuser", validation_alias="POSTGRES_USER")
     POSTGRES_PASSWORD: str = Field("changeme", validation_alias="POSTGRES_PASSWORD")
     POSTGRES_DB: str = Field("supply_chain", validation_alias="POSTGRES_DB")
-    POSTGRES_HOST: str = Field("postgres", validation_alias="POSTGRES_HOST")
+    POSTGRES_HOST: str = Field("localhost", validation_alias="POSTGRES_HOST")
     POSTGRES_PORT: str = Field("5432", validation_alias="POSTGRES_PORT")
 
     # ─── REDIS ────────────────────────────────────────────────────────────────────
-    REDIS_HOST: str = Field("redis", validation_alias="REDIS_HOST")
+    REDIS_HOST: str = Field("localhost", validation_alias="REDIS_HOST")
     REDIS_PORT: str = Field("6379", validation_alias="REDIS_PORT")
     REDIS_PASSWORD: str = Field("", validation_alias="REDIS_PASSWORD")
 
     # ─── KAFKA ────────────────────────────────────────────────────────────────────
-    KAFKA_BOOTSTRAP_SERVERS: str = Field("kafka:9092", validation_alias="KAFKA_BOOTSTRAP_SERVERS")
+    KAFKA_BOOTSTRAP_SERVERS: str = Field("localhost:9092", validation_alias="KAFKA_BOOTSTRAP_SERVERS")
     KAFKA_TOPIC_AIS: str = Field("ais-feed", validation_alias="KAFKA_TOPIC_AIS")
     KAFKA_TOPIC_FLIGHT: str = Field("flight-feed", validation_alias="KAFKA_TOPIC_FLIGHT")
     KAFKA_TOPIC_GEO_EVENTS: str = Field("geo-events", validation_alias="KAFKA_TOPIC_GEO_EVENTS")
 
     # ─── NEO4J ────────────────────────────────────────────────────────────────────
-    NEO4J_URI: str = Field("bolt://neo4j:7687", validation_alias="NEO4J_URI")
+    NEO4J_URI: str = Field("bolt://localhost:7687", validation_alias="NEO4J_URI")
     NEO4J_USERNAME: str = Field("neo4j", validation_alias="NEO4J_USERNAME")
     NEO4J_PASSWORD: str = Field("changeme", validation_alias="NEO4J_PASSWORD")
 
@@ -62,7 +62,16 @@ class Settings(BaseSettings):
     NEO4J_PASSWORD: str = Field("changeme", validation_alias="NEO4J_PASSWORD")
     
     # ─── LLM & AGENT CORE ─────────────────────────────────────────────────────────
-    GEMINI_API_KEY: str = Field("", validation_alias="GEMINI_API_KEY")
+    GEMINI_API_KEY:   str = Field("", validation_alias="GEMINI_API_KEY")
+    GEMINI_API_KEY_2: str = Field("", validation_alias="GEMINI_API_KEY_2")
+    GEMINI_API_KEY_3: str = Field("", validation_alias="GEMINI_API_KEY_3")
+    GEMINI_API_KEY_4: str = Field("", validation_alias="GEMINI_API_KEY_4")
+    GEMINI_API_KEY_5: str = Field("", validation_alias="GEMINI_API_KEY_5")
+    GROQ_API_KEY:     str = Field("", validation_alias="GROQ_API_KEY")
+    GROQ_API_KEY_2:   str = Field("", validation_alias="GROQ_API_KEY_2")
+    GROQ_API_KEY_3:   str = Field("", validation_alias="GROQ_API_KEY_3")
+    GROQ_API_KEY_4:   str = Field("", validation_alias="GROQ_API_KEY_4")
+    GROQ_API_KEY_5:   str = Field("", validation_alias="GROQ_API_KEY_5")
     SLACK_BOT_TOKEN: str = Field("", validation_alias="SLACK_BOT_TOKEN")
     SLACK_CHANNEL_ID: str = Field("", validation_alias="SLACK_CHANNEL_ID")
     
@@ -76,6 +85,6 @@ class Settings(BaseSettings):
     @property
     def sync_database_url(self) -> str:
         import os
-        return os.environ.get('DATABASE_URL', 'postgresql://scuser:scuser@postgres:5432/supply_chain')
+        return os.environ.get('DATABASE_URL', 'postgresql://scuser:scuser@localhost:5432/supply_chain')
 
 settings = Settings()

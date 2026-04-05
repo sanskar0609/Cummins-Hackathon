@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, Float, Enum, DateTime, ForeignKey
 from sqlalchemy.sql import func
-from app.db.base import Base
+from app.db.declarative import Base
 import enum
 
 class EntityType(str, enum.Enum):

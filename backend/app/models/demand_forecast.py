@@ -1,9 +1,10 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime, Date
+from sqlalchemy import Column, Integer, String, Float, DateTime, Date, ForeignKey
 from sqlalchemy.sql import func
-from app.db.base import Base
+from app.db.declarative import Base
 
 class DemandForecast(Base):
     id = Column(Integer, primary_key=True, index=True)
+    company_profile_id = Column(Integer, ForeignKey("company_profile.id"), nullable=True, index=True)
     sku = Column(String, index=True, nullable=False)
     forecast_date = Column(Date, index=True, nullable=False) # The future date being predicted
     predicted_demand = Column(Float, nullable=False) # yhat

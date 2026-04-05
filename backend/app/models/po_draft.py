@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, Enum, DateTime, ForeignKey, Float
 from sqlalchemy.sql import func
-from app.db.base import Base
+from app.db.declarative import Base
 import enum
 
 class POStatus(str, enum.Enum):
@@ -18,6 +18,7 @@ APPROVED_PENDING_ERP = POStatus.APPROVED
 
 class PODraft(Base):
     id = Column(Integer, primary_key=True, index=True)
+    company_profile_id = Column(Integer, ForeignKey("company_profile.id"), nullable=True, index=True)
     supplier_id = Column(Integer, ForeignKey("suppliers.id"), nullable=False, index=True)
     sku = Column(String, index=True, nullable=False)
     quantity = Column(Integer, nullable=False)

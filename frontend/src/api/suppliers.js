@@ -17,3 +17,16 @@ export const fetchSupplierNarrative = async (supplierId, companyName) => {
   }
   return res.json()
 }
+
+export const propagateRisk = async (inputData) => {
+  const res = await fetch(`${API_BASE}/risk/multi-tier-propagation`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(inputData)
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(err.detail || `Risk propagation failed (${res.status})`)
+  }
+  return res.json()
+}

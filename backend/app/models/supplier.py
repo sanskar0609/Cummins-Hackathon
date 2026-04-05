@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String, Float, Enum
-from app.db.base import Base
+from app.db.declarative import Base
 import enum
 
 class SupplierTier(str, enum.Enum):

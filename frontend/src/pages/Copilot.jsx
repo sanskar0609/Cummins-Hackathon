@@ -26,13 +26,14 @@ const SUGGESTIONS = [
 ]
 
 // ─── TYPEWRITER HOOK ─────────────────────────────────────────────────────
-function useTypewriter(text, isActive, speedMs = 18) {
+function useTypewriter(text = '', isActive, speedMs = 18) {
   const [displayed, setDisplayed] = useState('')
   const [isDone, setIsDone] = useState(false)
   
   useEffect(() => {
+    const safeText = text || ''
     if (!isActive) {
-      setDisplayed(text)
+      setDisplayed(safeText)
       setIsDone(true)
       return
     }
@@ -42,8 +43,8 @@ function useTypewriter(text, isActive, speedMs = 18) {
     
     const interval = setInterval(() => {
       curIndex++
-      setDisplayed(text.slice(0, curIndex))
-      if (curIndex >= text.length) {
+      setDisplayed(safeText.slice(0, curIndex))
+      if (curIndex >= safeText.length) {
         clearInterval(interval)
         setIsDone(true)
       }

@@ -1,13 +1,9 @@
 import json
-from google import genai
-from google.genai import types
 from langgraph.graph import StateGraph, END
 from typing import TypedDict, Optional, Dict
 from app.core.config import settings
 from app.core.logging import log
-
-# Initialise the new google.genai client once
-_client = genai.Client(api_key=settings.GEMINI_API_KEY) if settings.GEMINI_API_KEY else None
+from app.core.gemini_rotator import generate_content_with_retry as _gemini_gen
 
 class NarrativeState(TypedDict):
     supplier_id: str
@@ -44,22 +40,16 @@ def generate_narrative_node(state: NarrativeState) -> NarrativeState:
     }}
     """
 
-    if not _client:
-        state["narrative"] = "Gemini API key not configured."
-        state["confidence_rating"] = "LOW"
-        return state
-
     try:
-        response = _client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json"
-            )
-        )
-        payload = json.loads(response.text)
+        # Gemini rotator (5 keys round-robin) → auto falls back to Groq on full exhaustion
+        raw = _gemini_gen(prompt, model_name="gemini-2.0-flash")
+        clean = raw.replace("```json", "").replace("```", "").strip()
+        payload = json.loads(clean)
         state["narrative"] = payload.get("narrative", "Unable to generate narrative.")
         state["confidence_rating"] = payload.get("confidence_rating", "LOW")
+    except json.JSONDecodeError:
+        state["narrative"] = raw.strip() if 'raw' in dir() else "Unable to parse AI response."
+        state["confidence_rating"] = "LOW"
     except Exception as e:
         log.error("gemini_narrative_error", error=str(e))
         state["narrative"] = "Error executing AI inference."

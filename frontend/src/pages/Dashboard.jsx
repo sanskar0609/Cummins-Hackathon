@@ -529,9 +529,9 @@ export default function Dashboard() {
     mapRef.current = map
 
     return () => {
-      markersRef.current.forEach(m => m.remove())
-      vesselMarkersRef.current.forEach(m => m.remove())
-      map.remove()
+      if (markersRef.current) markersRef.current.forEach(m => m.remove())
+      if (vesselMarkersRef.current) vesselMarkersRef.current.forEach(m => m.remove ? m.remove() : null)
+      if (map) map.remove()
       mapRef.current = null
       setMapReady(false)
     }
@@ -609,11 +609,11 @@ export default function Dashboard() {
       const el = document.createElement('div')
       el.style.cssText = 'width:5px;height:5px;border-radius:50%;background:rgba(0,212,255,0.6);box-shadow:0 0 5px rgba(0,212,255,0.4);'
 
-      new mapboxgl.Marker({ element: el, anchor: 'center' })
+      const marker = new mapboxgl.Marker({ element: el, anchor: 'center' })
         .setLngLat(coords)
         .addTo(mapRef.current)
 
-      vesselMarkersRef.current.push(el)
+      vesselMarkersRef.current.push(marker)
     })
   }, [mapReady, vessels])
 

@@ -1,0 +1,15 @@
+sku,name,category,description
+T01,Tata Punch,Hatchback,A compact hatchback car
+T02,Tata Sierra,SUV,A mid-size SUV
+T03,Tata Tiago EV,Electric Car,An electric version of the Tiago hatchback
+T04,Tata Nexon,SUV,A compact SUV
+T05,Tata Harrier,SUV,A mid-size SUV
+T06,Tata Safari,SUV,A full-size SUV
+T07,Tata Yodha SC 4x4 CLB,Truck,A commercial pickup truck
+T08,Tata Ace Gold+ Diesel CLB,Truck,A small commercial truck
+T09,Tata LCV Truck,Truck,A light commercial vehicle truck
+T10,Tata MCV Truck,Truck,A medium commercial vehicle truck
+T11,Tata ICV Truck,Truck,An intermediate commercial vehicle truck
+T12,Tata Tractor,Tractor,A heavy-duty tractor
+T13,Tata Tipper,Truck,A commercial tipper truck
+T14,Tata RMC,Truck,A ready-mix concrete truck

@@ -8,6 +8,14 @@ from app.core.config import settings
 from app.services.kafka_producer import publish_message
 from app.core.logging import log
 
+# Simple NLP severity scorer — negative keywords → higher score
+_NEG_KEYWORDS = ["attack", "explosion", "closure", "sanction", "conflict",
+                  "strike", "protest", "earthquake", "typhoon", "war", "seized"]
+def _score_severity(title: str) -> float:
+    title_lo = title.lower()
+    hits = sum(1 for kw in _NEG_KEYWORDS if kw in title_lo)
+    return min(1.0, round(0.2 + hits * 0.15, 2))
+
 POLL_INTERVAL_SECONDS = 21600 # 6 hours
 
 # Key keywords to filter out non-relevant news
@@ -154,6 +162,50 @@ async def poll_geo_events():
                         
                         # 2. Publish to Kafka geo-events topic
                         publish_message(settings.KAFKA_TOPIC_GEO_EVENTS, key=key, message=ev)
+
+                # 3. ── NEW: Persist to geo_risk_events PostgreSQL table ──────
+                try:
+                    from app.db.session import SessionLocal
+                    from app.models.geo_risk_event import GeoRiskEvent
+                    db = SessionLocal()
+                    inserted = 0
+                    try:
+                        for ev in batch_events:
+                            url = ev.get("url", "") or ""
+                            title = ev.get("title", "") or ""
+                            # Skip duplicates by URL
+                            if url:
+                                exists = db.query(GeoRiskEvent).filter(GeoRiskEvent.url == url).first()
+                                if exists:
+                                    continue
+                            
+                            # Extract rough affected region from title
+                            affected = next(
+                                (reg for reg in REGIONS if reg.lower() in title.lower()), None
+                            )
+                            
+                            row = GeoRiskEvent(
+                                source        = ev.get("source", "GDELT"),
+                                title         = title[:500],
+                                url           = url[:1000] if url else None,
+                                domain        = ev.get("domain", "")[:200],
+                                event_type    = next((kw for kw in RISK_KEYWORDS if kw in title.lower()), "general"),
+                                affected_region = affected,
+                                severity_score  = _score_severity(title),
+                                seendate        = ev.get("seendate", "")[:50],
+                            )
+                            db.add(row)
+                            inserted += 1
+                        
+                        db.commit()
+                        log.info("geo_events_persisted_to_postgres", inserted=inserted, total=len(batch_events))
+                    except Exception as db_err:
+                        db.rollback()
+                        log.error("geo_events_db_write_error", error=str(db_err))
+                    finally:
+                        db.close()
+                except Exception as import_err:
+                    log.error("geo_events_db_import_error", error=str(import_err))
 
             log.info("geo_polling_batch_complete", total_events_published=len(batch_events))
             

@@ -1,5 +1,5 @@
-from sqlalchemy import Column, Integer, String, Float, Enum
-from app.db.base import Base
+from sqlalchemy import Column, Integer, String, Float, Enum, JSON
+from app.db.declarative import Base
 import enum
 
 class TransportMode(str, enum.Enum):

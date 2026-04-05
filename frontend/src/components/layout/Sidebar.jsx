@@ -1,15 +1,16 @@
 import React from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { Activity, LayoutDashboard, Route, Map, TrendingUp, FlaskConical, Bot, Bell } from 'lucide-react'
+import { Activity, LayoutDashboard, Route, Map, TrendingUp, FlaskConical, Bot, Bell, Settings } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 const navItems = [
   { path: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { path: '/suppliers', label: 'Suppliers', icon: Map },
   { path: '/demand', label: 'Demand', icon: TrendingUp },
+  { path: '/rerouting', label: 'Rerouting', icon: Route },
   { path: '/simulator', label: 'Simulator', icon: FlaskConical },
   { path: '/copilot', label: 'Co-Pilot', icon: Bot },
-  { path: '/alerts', label: 'Alerts & POs', icon: Bell }
+  { path: '/alerts', label: 'Alerts & POs', icon: Bell },
+  { path: '/setup', label: 'Company Setup', icon: Settings }
 ]
 
 export function Sidebar() {
@@ -49,11 +50,21 @@ export function Sidebar() {
         })}
       </nav>
       
-      <div className="mt-auto pt-6 border-t border-white/5">
+      <div className="mt-auto pt-6 border-t border-white/5 space-y-4">
         <div className="px-4 py-3 rounded-xl bg-gradient-to-br from-sc_purple/20 to-transparent border border-sc_purple/20 flex flex-col gap-1">
           <span className="text-xs font-mono text-sc_purple uppercase tracking-widest">Enterprise API</span>
           <span className="text-sm font-semibold text-white">Status: Nominal</span>
         </div>
+        <button
+          onClick={() => {
+            localStorage.removeItem('company_id');
+            localStorage.removeItem('company_name');
+            window.location.href = '/setup';
+          }}
+          className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 transition-colors border border-red-500/20"
+        >
+          <span className="font-mono text-sm uppercase tracking-wider">Log Out Profile</span>
+        </button>
       </div>
     </div>
   )

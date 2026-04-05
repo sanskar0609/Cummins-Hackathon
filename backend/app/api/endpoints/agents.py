@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from app.services.agents.smart_alert import trigger_smart_alert
 from app.core.logging import log
 
@@ -40,12 +40,33 @@ async def fire_smart_alert_agent(payload: AlertTriggerPayload):
             "slack_ts": "1234.5678"
         }
 
-from app.services.agents.autonomous_po import trigger_po_agent
+from app.services.agents.autonomous_po import trigger_po_agent, finalize_po_execution
+
+class POExecutePayload(BaseModel):
+    po_id: int
+    approved_by: Optional[str] = "MANUAL_UI"
+
+@router.post("/po/execute", response_model=Dict[str, Any])
+async def approve_and_execute_po_draft(payload: POExecutePayload):
+    """
+    Finalizes a PO draft. In a real system, this would trigger the actual SAP BAPI call.
+    In our OS, it updates the audit record to 'APPROVED'.
+    """
+    try:
+        log.info("po_execution_requested", po_id=payload.po_id)
+        result = finalize_po_execution(payload.po_id, payload.approved_by)
+        if result["status"] == "error":
+            raise HTTPException(status_code=400, detail=result["message"])
+        return result
+    except Exception as e:
+        log.error("po_execution_fail", error=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
 
 class POTelemetryPayload(BaseModel):
     ds_ratio: float = Field(..., description="Calculated ratio, where > 1.5 triggers emergency procurement natively.")
     sku: str = Field(..., description="Target stock keeping unit.")
     current_supply: float = Field(..., description="Physical inventory.")
+    company_id: Optional[int] = None
 
 @router.post("/po/trigger", response_model=Dict[str, Any])
 async def execute_autonomous_po_drafting(payload: POTelemetryPayload):

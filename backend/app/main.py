@@ -17,22 +17,21 @@ app = FastAPI(
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
-# ── CORS ──────────────────────────────────────────────────────────────────────
-if settings.CORS_ORIGINS:
-    origins = [o.strip() for o in settings.CORS_ORIGINS.split(',')]
-    if "http://localhost:5173" not in origins:
-        origins.append("http://localhost:5173")
-    if "http://localhost:8000" not in origins:
-        origins.append("http://localhost:8000")
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=origins,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+# ── STATIC FILES (for CSV downloads) ──────────────────────────────────────────
+from fastapi.staticfiles import StaticFiles
+import os
 
-app.add_middleware(CorrelationIdMiddleware)
+if os.path.exists(settings.DATA_PROCESSED_PATH):
+    app.mount("/static/processed", StaticFiles(directory=settings.DATA_PROCESSED_PATH), name="processed")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# app.add_middleware(CorrelationIdMiddleware)
 
 # ── LIFECYCLE ─────────────────────────────────────────────────────────────────
 @app.on_event("startup")

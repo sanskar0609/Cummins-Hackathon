@@ -20,13 +20,16 @@ export default function Alerts() {
   const [draftErrorAlert, setDraftErrorAlert] = useState(null)
   
   const [isProcessingAlert, setIsProcessingAlert] = useState(null)
+  const [isExecuting, setIsExecuting] = useState(false)
 
   // Fetch real alerts
   const fetchAlerts = async () => {
     setIsLoadingAlerts(true)
     setAlertsError(null)
     try {
-      const res = await fetch(`${API_BASE}/alerts`)
+      const cid = localStorage.getItem('company_id');
+      const query = cid ? `?company_id=${cid}` : '';
+      const res = await fetch(`${API_BASE}/alerts${query}`)
       if (!res.ok) throw new Error('API unreachable')
       const data = await res.json()
       setAlerts(Array.isArray(data) ? data : (data.alerts || []))
@@ -61,11 +64,27 @@ export default function Alerts() {
 
   // 1. Alert Action: Approve & Trigger Agent
   const handleApproveAlert = async (alert) => {
-    setIsProcessingAlert(alert.id || alert._id || 'unknown')
+    const alertId = alert.id || alert._id || 'unknown'
+    setIsProcessingAlert(alertId)
     setDraftErrorAlert(null)
+    
+    // If it's already a PO draft fetched from the DB, don't re-trigger the drafting agent.
+    // Just load it into the right panel instantly.
+    if (alert.rawSource === 'po_drafts') {
+      setActiveDraft({
+        id: parseInt(String(alertId).replace('po-', '')),
+        sku: alert.sku || alert.affected || "SKU-001",
+        supplier: alert.agenticDraft?.supplier || "Backup Vendor",
+        qty: alert.agenticDraft?.gapUnits || alert.agenticDraft?.qty || 0,
+        estimatedCost: `$${(alert.agenticDraft?.costEst || 0).toLocaleString()}`,
+        justification: alert.summary || "Pending approval from previous agent session."
+      })
+      setIsProcessingAlert(null)
+      return
+    }
+
     try {
       const alertSource = alert.rawSource || alert.source || alert.type || 'SYSTEM_ALERT'
-      const alertId = alert.id || alert._id || 'unknown'
       const alertSum = alert.summary || alert.description || ''
 
       const res = await fetch(`${API_BASE}/agents/alerts/trigger`, {
@@ -91,7 +110,7 @@ export default function Alerts() {
       // Attempt to generate PO Draft
       generatePODraft(alert)
 
-      // Remove from timeline
+      // Remove from timeline to keep it clean (it will re-appear as a PO Draft if page is refreshed)
       setAlerts(prev => prev.filter(a => (a.id || a._id) !== alertId))
     } catch (error) {
       toast.error('Failed to trigger LangGraph agent.', { style: { background: '#0b0f17', color: '#fff' } })
@@ -112,40 +131,65 @@ export default function Alerts() {
     setActiveDraft(null)
     setDraftErrorAlert(null)
     try {
+      const cid = localStorage.getItem('company_id');
       const res = await fetch(`${API_BASE}/agents/po/trigger`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ds_ratio: alert.ds_ratio || 2.5,
-          sku: alert.sku || alert.affected || "SKU-UNKNOWN",
-          current_supply: alert.current_supply || 1000
+          ds_ratio: alert.agenticDraft?.dsRatio || alert.ds_ratio || 2.5,
+          sku: String(alert.sku || alert.affected || "SKU-001").replace(/^SKU\s+/, '').split(' ')[0],
+          current_supply: alert.agenticDraft?.currentSupply || alert.current_supply || 1000,
+          company_id: cid ? parseInt(cid) : null
         })
       })
       if (!res.ok) throw new Error('API Error')
       const data = await res.json()
       
       setActiveDraft({
-        sku: data.po_draft?.sku || data.sku || alert.sku || alert.affected || "SKU-UNKNOWN",
+        id: data.po_draft?.id,
+        sku: data.po_draft?.sku || data.sku || alert.sku || alert.affected || "SKU-001",
         supplier: data.po_draft?.supplier || data.supplier || "Auto-selected Alternative Supplier",
-        qty: data.po_draft?.qty || data.qty || "Determined by logic model",
-        estimatedCost: data.po_draft?.estimatedCost || data.estimatedCost || "Calculated at Execution",
+        qty: data.po_draft?.qty || data.po_draft?.quantity_to_order || "Determined by logic model",
+        estimatedCost: data.po_draft?.estimatedCost || data.po_draft?.estimated_unit_cost 
+          ? `$${(data.po_draft.quantity_to_order * data.po_draft.estimated_unit_cost).toLocaleString()}`
+          : "Calculated at Execution",
         justification: data.po_draft?.justification || data.po_draft || data.justification || "LangGraph reasoning applied to mitigate disruption.",
       })
       
     } catch (err) {
-      // Step 6g: Show error state in right panel instead of fallback block
       setDraftErrorAlert(alert)
     } finally {
       setIsGeneratingPO(false)
     }
   }
 
-  const handleExecutePO = () => {
-    toast.success('Autonomous PO Approved & Executed!', { 
-      icon: '✅', 
-      style: { background: '#0b0f17', color: '#4ade80', border: '1px solid #4ade80' } 
-    })
-    setActiveDraft(null)
+  const handleExecutePO = async () => {
+    if (!activeDraft?.id) {
+      toast.error('PO ID missing. Cannot execute.')
+      return
+    }
+    setIsExecuting(true)
+    try {
+      const res = await fetch(`${API_BASE}/agents/po/execute`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          po_id: activeDraft.id,
+          approved_by: localStorage.getItem('company_name') || 'WEB_USER'
+        })
+      })
+      if (!res.ok) throw new Error('Execution failed')
+      
+      toast.success('Autonomous PO Approved & Executed!', { 
+        icon: '✅', 
+        style: { background: '#0b0f17', color: '#4ade80', border: '1px solid #4ade80' } 
+      })
+      setActiveDraft(null)
+    } catch (err) {
+      toast.error('Execution failed: ' + err.message)
+    } finally {
+      setIsExecuting(false)
+    }
   }
 
   return (
@@ -378,11 +422,21 @@ export default function Alerts() {
 
                 {/* Exec Actions */}
                 <div className="mt-6 flex flex-col gap-2">
-                  <button onClick={handleExecutePO} className="w-full py-3 bg-sc_green hover:bg-green-500 text-black rounded-lg text-sm font-mono font-bold transition-all shadow-[0_0_20px_rgba(74,222,128,0.2)] hover:shadow-[0_0_30px_rgba(74,222,128,0.4)] flex items-center justify-center gap-2 group">
-                    Approve &amp; Execute PO
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  <button 
+                    onClick={handleExecutePO} 
+                    disabled={isExecuting}
+                    className="w-full py-3 bg-sc_green hover:bg-green-500 text-black rounded-lg text-sm font-mono font-bold transition-all shadow-[0_0_20px_rgba(74,222,128,0.2)] hover:shadow-[0_0_30px_rgba(74,222,128,0.4)] flex items-center justify-center gap-2 group disabled:opacity-50"
+                  >
+                    {isExecuting ? <Bot className="w-4 h-4 animate-spin" /> : <>
+                      Approve &amp; Execute PO
+                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    </>}
                   </button>
-                  <button onClick={() => setActiveDraft(null)} className="w-full py-2.5 border border-white/10 hover:border-sc_red/50 hover:bg-sc_red/10 hover:text-red-400 text-slate-400 rounded-lg text-sm font-mono transition-all">
+                  <button 
+                    onClick={() => setActiveDraft(null)} 
+                    disabled={isExecuting}
+                    className="w-full py-2.5 border border-white/10 hover:border-sc_red/50 hover:bg-sc_red/10 hover:text-red-400 text-slate-400 rounded-lg text-sm font-mono transition-all disabled:opacity-50"
+                  >
                     Reject Override
                   </button>
                 </div>

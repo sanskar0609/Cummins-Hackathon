@@ -1,0 +1,7 @@
+product_id,product_name,category,source_city,destination_city,locality,price,stock,demand_score,risk_score,warehouse_id
+P001,Tata Nexon EV,Electric Vehicle,Pune,Mumbai,Bandra,1500000,20,0.82,0.15,W001
+P002,Tata Punch,Passenger Vehicle,Mumbai,Pune,Hinjewadi,600000,40,0.75,0.1,W002
+P003,Tata Safari,Passenger Vehicle,Delhi,Bangalore,Whitefield,1600000,10,0.68,0.2,W003
+P004,Tata Altroz,Passenger Vehicle,Chennai,Hyderabad,Gachibowli,800000,25,0.72,0.12,W004
+P005,Tata Ace Gold,Commercial Vehicle,Nashik,Pune,Wakad,450000,15,0.9,0.18,W005
+P006,Tata Ultra Truck,Commercial Vehicle,Kolkata,Delhi,Karol Bagh,2200000,8,0.65,0.25,W006
