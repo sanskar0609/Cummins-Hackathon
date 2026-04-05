@@ -47,6 +47,14 @@ async def startup_event():
     except Exception as e:
         log.warning("neo4j_seed_skipped_on_startup", error=str(e))
 
+    # Seed Demand Forecasts (Prophet) on Startup for a populated dashboard
+    try:
+        from app.services.ml_demand_forecaster import generate_and_store_forecasts
+        generate_and_store_forecasts()
+        log.info("demand_forecasts_seeded_on_startup")
+    except Exception as e:
+        log.warning("demand_seed_skipped_on_startup", error=str(e))
+
 
 @app.on_event("shutdown")
 async def shutdown_event():

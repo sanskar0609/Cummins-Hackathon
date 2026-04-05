@@ -5,10 +5,13 @@ try:
     import mlflow.sklearn
 except ImportError:
     mlflow = None
+import joblib
 from sklearn.ensemble import RandomForestRegressor
 from datetime import datetime
 from app.core.config import settings
 from app.core.logging import log
+
+MODEL_PATH = os.path.join("ml", "lstm", "route_risk_model.pkl")
 
 # TODO: Replaced PyTorch LSTM with scikit-learn RandomForest equivalent natively
 # since torch architectures were too large for Docker deployment.
@@ -34,10 +37,29 @@ def train_and_log_model():
         mlflow.sklearn.log_model(model, "model", registered_model_name="RouteRiskRF")
         log.info("rf_training_complete", r2_score=score)
 
-def predict_route_risk(route_id: str) -> float:
+def train_and_save_mock_model():
+    """ Trains the RF model on mock data and serializes to .pkl for deployment. """
+    log.info("start_training_route_risk_model")
     model = RandomForestRegressor(n_estimators=10)
-    X_train, y_train = generate_mock_route_features(100)
+    X_train, y_train = generate_mock_route_features(200)
     model.fit(X_train, y_train)
+    
+    os.makedirs(os.path.dirname(MODEL_PATH), exist_ok=True)
+    joblib.dump(model, MODEL_PATH)
+    log.info("route_risk_model_saved", path=MODEL_PATH)
+    return model
+
+def predict_route_risk(route_id: str) -> float:
+    """ Prediction logic using pre-trained .pkl if available. """
+    if os.path.exists(MODEL_PATH):
+        try:
+            model = joblib.load(MODEL_PATH)
+        except Exception:
+            # Re-train safely if load fails
+            model = train_and_save_mock_model()
+    else:
+        # Create it on the fly for the first time
+        model = train_and_save_mock_model()
     
     X_test, _ = generate_mock_route_features(1)
     prediction = model.predict(X_test)[0]

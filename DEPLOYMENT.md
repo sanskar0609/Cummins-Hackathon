@@ -82,6 +82,31 @@ VITE_MAPBOX_TOKEN=your_mapbox_token_here
 
 ---
 
+## 🤖 AI & LLM Deployment Considerations
+
+Deploying LLM-driven supply chain systems requires additional operational handles:
+
+### 1. API Management & Fallbacks
+- **Rate Limiting**: Free-tier Gemini/Groq keys have low RPM (Requests Per Minute). Monitor throughput and implement retries with exponential backoff.
+- **Failover**: Configure a secondary model (e.g., GPT-4o or Llama 3) if the primary model reaches its daily limit.
+
+### 2. Prompt Engineering & Consistency
+- **Temperature Control**: Ensure the backend uses a low temperature (e.g., `0.1` or `0.0`) for deterministic supply chain risk calculations.
+- **Latency Monitoring**: AI market sensing can take 5–15 seconds. Ensure the frontend has "Streaming" or "Processing" states (already implemented in Demand/Copilot pages).
+
+### 3. Data Privacy
+- **Anonymization**: Scrub any sensitive supplier PII OR internal SKU costs before sending data to public LLM endpoints.
+- **Compliance**: For enterprise use, utilize VPC-based AI endpoints (e.g., Google Vertex AI or Azure OpenAI) instead of public API keys.
+
+### 4. Local ML Models vs. APIs
+> [!NOTE]
+> This project utilizes **API-based AI** (Gemini and Groq) for high-level sentiment analysis and reasoning. For local time-series and risk scoring:
+> - **Demand Forecasting**: Uses `Prophet` (auto-seeded on startup).
+> - **Route Risk**: Uses a persistent `.pkl` model (RandomForest) to ensure low-latency scoring without re-training on every request.
+> - **Auto-Seeding**: The backend automatically seeds the Neo4j graph and the prophet forecasts on the first `startup` event, ensuring a "ready-to-use" dashboard experience.
+
+---
+
 ## 🚀 Production Deployment
 
 ### Option A: Manual Deployment (VPS/EC2)
