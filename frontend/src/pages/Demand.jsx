@@ -56,13 +56,14 @@ function RadialGauge({ ratio, isLoading }) {
 
 // ─── COMPONENT: FORECAST CHART ────────────────────────────────────────────────
 function ForecastChart({ data, sku }) {
-  if (!data?.length) return (
+  const validData = data.filter(row => row && row.predicted_demand != null)
+  if (!validData.length) return (
      <div className="flex flex-col items-center justify-center p-20 gap-4 opacity-40">
         <Database className="w-12 h-12 text-slate-500" />
-        <div className="text-center font-mono text-xs uppercase tracking-widest leading-loose">Waintg to Supply Updates... <br/> Run Forecaster Pipeline to Sync.</div>
+        <div className="text-center font-mono text-xs uppercase tracking-widest leading-loose">Waiting for Supply Updates... <br/> Run Forecaster Pipeline to Sync.</div>
      </div>
   )
-  const chartData = data.map((row) => ({ date: row.forecast_date.slice(5), demand: row.predicted_demand, upper: row.upper_bound, lower: row.lower_bound }))
+  const chartData = validData.map((row) => ({ date: row.forecast_date.slice(5), demand: row.predicted_demand, upper: row.upper_bound, lower: row.lower_bound }))
   return (
     <div className="w-full h-full flex flex-col pt-4">
       <ResponsiveContainer width="100%" height={320}>

@@ -25,7 +25,7 @@ if os.path.exists(settings.DATA_PROCESSED_PATH):
     app.mount("/static/processed", StaticFiles(directory=settings.DATA_PROCESSED_PATH), name="processed")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["https://supply-chain-sage.vercel.app", "http://localhost:5173", "http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -146,7 +146,15 @@ export default function Copilot() {
       }
 
       try {
-        const url = `${WS_BASE_URL}/copilot/chat/${sessionId}`.replace('http', 'ws')
+        let baseUrl = WS_BASE_URL || import.meta.env.VITE_API_BASE_URL || '';
+        let url = `${baseUrl}/copilot/chat/${sessionId}`;
+        
+        if (url.startsWith('https://')) {
+          url = url.replace('https://', 'wss://');
+        } else if (url.startsWith('http://')) {
+          url = url.replace('http://', 'ws://');
+        }
+        
         const ws = new WebSocket(url)
 
         ws.onopen = () => {
