@@ -38,6 +38,14 @@ app.add_middleware(
 async def startup_event():
     log.info("supply_chain_os_starting")
 
+    try:
+        from app.db.session import engine
+        from app.db.base import Base
+        Base.metadata.create_all(bind=engine)
+        log.info("database_tables_created_on_startup")
+    except Exception as e:
+        log.error("database_tables_creation_failed", error=str(e))
+
     # Seed the Neo4j supplier graph on every fresh startup (safe to re-run).
     # The seeder wipes the graph and rebuilds it, so the data is always consistent.
     try:

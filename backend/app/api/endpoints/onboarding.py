@@ -14,7 +14,8 @@ from app.db.base import Base, CompanyProfile
 from app.core.logging import log
 
 # In a real app we'd use Alembic. For hackathon, create tables:
-Base.metadata.create_all(bind=engine)
+# Moved to main.py startup event to prevent module import failure
+# Base.metadata.create_all(bind=engine)
 
 router = APIRouter()
 
