@@ -1,7 +1,6 @@
 import os
 import json
 import pandas as pd
-from ddgs import DDGS
 from app.core.gemini_rotator import async_generate_with_retry
 from app.core.config import settings
 from app.core.logging import log
@@ -16,15 +15,26 @@ async def research_products_via_search(query: str):
     # 1. Search DuckDuckGo
     search_results = []
     try:
-        with DDGS() as ddgs:
-            search_query = f"{query} product catalog list price"
-            log.info("searching_duckduckgo", query=search_query)
-            # Use max_results generator
-            results = ddgs.text(search_query, max_results=10)
-            for r in results:
-                log.info("search_result_found", title=r.get('title'))
-                search_results.append(f"Title: {r.get('title')}\nSnippet: {r.get('body')}\nURL: {r.get('href')}")
-            log.info("search_complete", found_count=len(search_results))
+        try:
+            from duckduckgo_search import DDGS
+        except ImportError:
+            try:
+                from ddgs import DDGS
+            except ImportError:
+                DDGS = None
+
+        if DDGS is not None:
+            with DDGS() as ddgs:
+                search_query = f"{query} product catalog list price"
+                log.info("searching_duckduckgo", query=search_query)
+                results = ddgs.text(search_query, max_results=10)
+                for r in results:
+                    log.info("search_result_found", title=r.get('title'))
+                    search_results.append(f"Title: {r.get('title')}\nSnippet: {r.get('body')}\nURL: {r.get('href')}")
+                log.info("search_complete", found_count=len(search_results))
+        else:
+            log.warning("duckduckgo_search module not found. Skipping search.")
+            search_results = ["Search skipped. Module not found."]
     except Exception as e:
         log.error("duckduckgo_search_failed", error=str(e))
         search_results = ["Search failed, relying on internal knowledge."]

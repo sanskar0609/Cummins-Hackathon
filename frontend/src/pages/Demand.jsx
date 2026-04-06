@@ -56,7 +56,7 @@ function RadialGauge({ ratio, isLoading }) {
 
 // ─── COMPONENT: FORECAST CHART ────────────────────────────────────────────────
 function ForecastChart({ data, sku }) {
-  const validData = data.filter(row => row && row.predicted_demand != null)
+  const validData = (data || []).filter(row => row && row.predicted_demand != null)
   if (!validData.length) return (
      <div className="flex flex-col items-center justify-center p-20 gap-4 opacity-40">
         <Database className="w-12 h-12 text-slate-500" />
