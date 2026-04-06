@@ -161,7 +161,10 @@ async def run_demand_sensing_agent(payload: AgentSensePayload):
     try:
         from app.services.agents.demand_agent_service import run_pipeline
         result = await run_pipeline(user_query=payload.query, baseline_units=payload.baseline_units)
+        if "error" in result:
+             raise HTTPException(status_code=500, detail=result["error"])
         return result
     except Exception as e:
         log.error("demand_agent_error", error=str(e))
-        return {"error": str(e)}
+        from fastapi import HTTPException
+        raise HTTPException(status_code=500, detail=str(e))

@@ -185,7 +185,7 @@ export default function Demand() {
                        <p className="text-[13px] text-white font-mono leading-relaxed italic text-premium">"Based on signal fusion, we recommend increasing safety stock by {agentResult.demand_trend_pct}% across coastal zones."</p>
                     </div>
                     <div className="mt-8 flex items-center justify-between border-t border-sc_purple/10 pt-4">
-                       <div className={`px-5 py-2 rounded-full text-[10px] font-black tracking-[0.2em] ${agentResult.trend_direction==='rising'?'bg-sc_green/10 text-sc_green border border-sc_green/30':'bg-sc_yellow/10 text-sc_yellow border border-sc_yellow/30'}`}>{agentResult.trend_direction.toUpperCase()} SIGNAL</div>
+                       <div className={`px-5 py-2 rounded-full text-[10px] font-black tracking-[0.2em] ${agentResult.trend_direction==='rising'?'bg-sc_green/10 text-sc_green border border-sc_green/30':'bg-sc_yellow/10 text-sc_yellow border border-sc_yellow/30'}`}>{agentResult.trend_direction?.toUpperCase() || 'STABLE'} SIGNAL</div>
                        <div className="flex flex-col items-end"><span className="text-[9px] font-mono text-slate-500 uppercase font-black">Confidence</span><span className="text-lg font-black text-white font-mono">{agentResult.confidence_percentage}</span></div>
                     </div>
                 </div>
