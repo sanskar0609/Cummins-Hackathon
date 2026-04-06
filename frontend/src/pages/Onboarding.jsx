@@ -101,7 +101,7 @@ export default function Onboarding() {
     const formData = new FormData();
     formData.append("file", file);
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/v1/onboarding/upload-csv", { method: "POST", body: formData });
+      const res = await fetch("https://cummins-hackathon.onrender.com/api/v1/onboarding/upload-csv", { method: "POST", body: formData });
       const data = await res.json();
       if (data.skus && data.skus.length > 0) {
         setSkus(data.skus);
@@ -123,7 +123,7 @@ export default function Onboarding() {
     setIsExtracting(true);
     const toastId = toast.loading("AI is mapping your categories...");
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/v1/onboarding/extract-skus", {
+      const res = await fetch("https://cummins-hackathon.onrender.com/api/v1/onboarding/extract-skus", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ description: aiDescription })
@@ -147,7 +147,7 @@ export default function Onboarding() {
   const handleFinish = async () => {
     const toastId = toast.loading("Saving workspace configuration...");
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/v1/onboarding/save", {
+      const res = await fetch("https://cummins-hackathon.onrender.com/api/v1/onboarding/save", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: companyData.name, industry: companyData.industry, skus, csv_path: csvPath })

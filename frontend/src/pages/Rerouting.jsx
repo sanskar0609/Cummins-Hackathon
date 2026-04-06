@@ -233,9 +233,9 @@ export default function Rerouting() {
             <div className="bg-sc_card/95 backdrop-blur-2xl px-4 py-3 rounded-2xl border border-white/10 shadow-2xl flex flex-col gap-4">
                <h3 className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2"><Layers className="w-3 h-3"/> Node Legend</h3>
                <div className="flex flex-col gap-3">
-                  <LegendItem color="bg-sc_red" label="Deficit Area" count={result?.visualization?.filter(n=>n.status==='DEFICIT')?.length} />
-                  <LegendItem color="bg-sc_cyan" label="Surplus Stash" count={result?.visualization?.filter(n=>n.status==='SURPLUS')?.length} />
-                  <LegendItem color="bg-sc_green" label="Balanced Stock" count={result?.visualization?.filter(n=>n.status==='OK')?.length} />
+                  <LegendItem color="bg-sc_red" label="Deficit Area" count={(Array.isArray(result?.visualization) ? result.visualization : []).filter(n=>n.status==='DEFICIT').length} />
+                  <LegendItem color="bg-sc_cyan" label="Surplus Stash" count={(Array.isArray(result?.visualization) ? result.visualization : []).filter(n=>n.status==='SURPLUS').length} />
+                  <LegendItem color="bg-sc_green" label="Balanced Stock" count={(Array.isArray(result?.visualization) ? result.visualization : []).filter(n=>n.status==='OK').length} />
                </div>
             </div>
             

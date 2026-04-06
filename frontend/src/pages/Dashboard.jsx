@@ -246,11 +246,12 @@ function ChokepointPopup({ data, onClose }) {
 // ─── RIGHT PANEL ─────────────────────────────────────────────────────────────
 function RightPanel({ chokepoints, vessels, isOffline, countdown, onRefresh }) {
   const vesselCount    = vessels?.features?.length ?? vessels?.length ?? 0
-  const activeRoutes   = chokepoints?.length ?? 0
-  const globalScore    = chokepoints?.length > 0
-    ? chokepoints.reduce((acc, c) => acc + (c.risk_score ?? 0.5), 0) / chokepoints.length
+  const safeChokepoints = Array.isArray(chokepoints) ? chokepoints : []
+  const activeRoutes   = safeChokepoints.length
+  const globalScore    = safeChokepoints.length > 0
+    ? safeChokepoints.reduce((acc, c) => acc + (c.risk_score ?? 0.5), 0) / safeChokepoints.length
     : 0.62
-  const criticalCount  = chokepoints?.filter(c => getRiskLevel(c.risk_score ?? 0.5) === 'CRITICAL').length ?? 0
+  const criticalCount  = safeChokepoints.filter(c => getRiskLevel(c.risk_score ?? 0.5) === 'CRITICAL').length
 
   return (
     <motion.div
@@ -453,7 +454,7 @@ export default function Dashboard() {
   })
 
   // Use live data or fallback — never undefined
-  const chokepoints = rawChokepoints?.chokepoints || FALLBACK_CHOKEPOINTS
+  const chokepoints = Array.isArray(rawChokepoints?.chokepoints) ? rawChokepoints.chokepoints : FALLBACK_CHOKEPOINTS
   const vessels     = rawVessels    || { features: [] }
 
   const handleRefresh = useCallback(() => {
